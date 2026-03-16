@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Habit Coach</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="glass-container">
+    <header>
+        <h1>🌿 HabitCoach<span>AI</span></h1>
+        <p class="subtitle">Your 24/7 accountability partner</p>
+    </header>
+
+    <main>
+        <div class="chat-display">
+            <div class="message bot-message">
+                Hello! I'm your Habit Coach. What area are you focusing on today? (Productivity, Health, or Growth?)
+            </div>
+
+            <div id="loading" class="loading-spinner">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+
+            <div id="response-container" class="message bot-message hidden">
+                <p id="response"></p>
+            </div>
+        </div>
+
+        <form id="aiForm" class="input-area">
+            <input 
+                type="text" 
+                id="prompt" 
+                placeholder="Ex: I want to stop procrastinating..." 
+                required 
+            />
+            <button id="submitBtn" type="submit">
+                <span>Send</span>
+            </button>
+        </form>
+    </main>
+
+    <footer>
+        <p id="error" class="error-text"></p>
+    </footer>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
