@@ -2,6 +2,7 @@ import 'dotenv/config'; // 1. THIS MUST BE FIRST
 import express from "express";
 import askRoute from "./routes/ask.js";
 import authRoute from "./routes/auth.js";
+import habitsRoute from "./routes/habits.js";
 import mongoose from "mongoose";
 
 const app = express();
@@ -13,6 +14,7 @@ mongoose.connect(process.env.MONGO_URI, {})
   .catch(err => console.error('MongoDB connection error:', err));
 app.use(express.static("public"));
 app.use("/api", authRoute);
+app.use("/api/habits", habitsRoute);
 app.use("/ask", askRoute);
 
 app.listen(3000, () => {

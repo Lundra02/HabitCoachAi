@@ -154,4 +154,122 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    // --- HABITS Logic ---
+    const addHabitForm = document.getElementById("addHabitForm");
+    const habitsList = document.getElementById("habitsList");
+
+    if (appContainer && token && addHabitForm && habitsList) {
+        // Fetch habits on load
+        const fetchHabits = async () => {
+            try {
+                const res = await fetch("/api/habits", {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("Failed to load habits");
+                const habits = await res.json();
+                renderHabits(habits);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        const renderHabits = (habits) => {
+            habitsList.innerHTML = "";
+            if (habits.length === 0) {
+                habitsList.innerHTML = "<p style='color: var(--text-sub); font-size: 0.95rem; text-align: center;'>No habits added yet. Start tracking today!</p>";
+                return;
+            }
+            
+            habits.forEach(habit => {
+                const card = document.createElement("div");
+                card.className = `habit-card ${habit.status === 'completed' ? 'completed' : ''}`;
+                
+                const safeTitle = habit.title.replace(/</g, "&lt;");
+                const safeDesc = habit.description ? habit.description.replace(/</g, "&lt;") : '';
+                
+                card.innerHTML = `
+                    <div class="habit-info">
+                        <h3>${safeTitle}</h3>
+                        ${safeDesc ? `<p>${safeDesc}</p>` : ''}
+                    </div>
+                    <div class="habit-actions">
+                        <button class="status-btn" onclick="toggleHabit('${habit._id}', '${habit.status}')" title="Mark as ${habit.status === 'completed' ? 'Pending' : 'Completed'}">
+                            ${habit.status === 'completed' ? '↩️' : '✅'}
+                        </button>
+                        <button class="delete-btn" onclick="deleteHabit('${habit._id}')" title="Delete">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                habitsList.appendChild(card);
+            });
+        };
+
+        // Make global functions for inline onclick handlers
+        window.toggleHabit = async (id, currentStatus) => {
+            const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+            try {
+                const res = await fetch(`/api/habits/${id}`, {
+                    method: "PUT",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (res.ok) fetchHabits();
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        window.deleteHabit = async (id) => {
+            if (!confirm("Are you sure you want to delete this habit?")) return;
+            try {
+                const res = await fetch(`/api/habits/${id}`, {
+                    method: "DELETE",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (res.ok) fetchHabits();
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        // Add Habit
+        addHabitForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const titleInput = document.getElementById("habitTitle");
+            const descInput = document.getElementById("habitDesc");
+            
+            try {
+                const res = await fetch("/api/habits", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({
+                        title: titleInput.value,
+                        description: descInput.value
+                    })
+                });
+                
+                if (res.ok) {
+                    titleInput.value = "";
+                    descInput.value = "";
+                    fetchHabits();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || "Failed to add habit");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        // Initial fetch
+        fetchHabits();
+    }
 });
