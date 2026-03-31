@@ -1,10 +1,13 @@
 {
+  "type": "module",
   "dependencies": {
-    "type": "module",
     "@google/generative-ai": "^0.24.1",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "groq-sdk": "^0.37.0",
-    "it": "^1.1.1"
+    "it": "^1.1.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.3.3"
   }
 }

@@ -1,6 +1,8 @@
 import express from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+import { protect } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
 
 // Initialize Gemini with your new key
@@ -9,7 +11,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ 
     model: "gemini-2.5-flash-lite" // This has a much higher daily limit than standard Flash
 });
-router.post("/", async (req, res) => {
+router.post("/", protect, async (req, res) => {
   try {
     const { prompt } = req.body;
 

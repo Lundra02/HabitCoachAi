@@ -1,52 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Habit Coach</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div class="glass-container">
-    <header>
-        <h1>🌿 HabitCoach<span>AI</span></h1>
-        <p class="subtitle">Your 24/7 accountability partner</p>
-    </header>
+    <!-- Main Application Container (Hidden until authenticated) -->
+    <div id="app-container" class="app-container hidden">
 
-    <main>
-        <div class="chat-display">
-            <div class="message bot-message">
-                Hello! I'm your Habit Coach. What area are you focusing on today? (Productivity, Health, or Growth?)
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🌿 HabitCoach<span>AI</span></h2>
             </div>
 
-            <div id="loading" class="loading-spinner">
-                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="user-profile">
+                <div class="avatar">👤</div>
+                <div class="user-info">
+                    <p class="user-name" id="userNameDisplay">Welcome Back!</p>
+                    <p class="user-role">Premium Member</p>
+                </div>
             </div>
 
-            <div id="response-container" class="message bot-message hidden">
-                <p id="response"></p>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">Dashboard</a>
+                <a href="#" class="nav-item">Settings</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
-        </div>
+        </aside>
 
-        <form id="aiForm" class="input-area">
-            <input 
-                type="text" 
-                id="prompt" 
-                placeholder="Ex: I want to stop procrastinating..." 
-                required 
-            />
-            <button id="submitBtn" type="submit">
-                <span>Send</span>
-            </button>
-        </form>
-    </main>
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Hello, ready to crush your goals?</h1>
+                <p class="subtitle">Your 24/7 AI accountability partner</p>
+            </header>
 
-    <footer>
-        <p id="error" class="error-text"></p>
-    </footer>
-</div>
+            <div class="chat-container">
+                <div class="chat-display">
+                    <div class="message bot-message">
+                        Hello! I'm your Habit Coach. What area are you focusing on today? (Productivity, Health, or
+                        Growth?)
+                    </div>
 
-<script src="script.js"></script>
+                    <div id="loading" class="loading-spinner">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+
+                    <div id="response-container" class="message bot-message hidden">
+                        <p id="response"></p>
+                    </div>
+                </div>
+
+                <form id="aiForm" class="input-area">
+                    <input type="text" id="prompt" placeholder="Ex: I want to stop procrastinating..." required />
+                    <button class="send-btn" id="submitBtn" type="submit">
+                        <span>Send</span>
+                    </button>
+                </form>
+            </div>
+            <p id="error" class="error-text"></p>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
 </body>
+
 </html>
