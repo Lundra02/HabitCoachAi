@@ -109,7 +109,9 @@ document.addEventListener("DOMContentLoaded", () => {
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
 
-            const userPrompt = promptInput.value;
+            const userPrompt = promptInput.value.trim();
+            if (!userPrompt) return;
+
             loading.style.display = "block";
             button.disabled = true;
             
@@ -117,36 +119,49 @@ document.addEventListener("DOMContentLoaded", () => {
             errorText.innerHTML = "";
             promptInput.value = "";
 
+            // Set up a 15-second frontend timeout as a safety net
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
             try {
-                const res = await fetch("/ask", {
+                const res = await fetch("/api/chat", {
                     method: "POST",
                     headers: { 
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}` 
                     },
-                    body: JSON.stringify({ prompt: userPrompt })
+                    body: JSON.stringify({ prompt: userPrompt }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 const data = await res.json();
 
                 if (res.status === 401) {
+                    // Handle expired JWT or unauthorized
                     localStorage.removeItem("token");
                     window.location.href = "login.html";
                     return;
                 }
 
                 if (!res.ok) {
-                    if (res.status === 429 || data.details?.includes("429")) {
-                        throw new Error("Google is limiting requests. Please wait 1 minute.");
-                    }
-                    throw new Error(data.details || "API Connection Failed");
+                    throw new Error(data.error || data.details || "API Connection Failed. Please try again later.");
+                }
+
+                if (!data.response) {
+                    throw new Error("Received an invalid response from the server.");
                 }
 
                 responseText.innerHTML = data.response.replace(/\n/g, '<br>');
                 responseContainer.classList.remove("hidden");
 
             } catch (err) {
-                errorText.innerHTML = `⚠️ ${err.message}`;
+                if (err.name === 'AbortError') {
+                    errorText.innerHTML = "⚠️ Request timed out. The server took too long to respond.";
+                } else {
+                    errorText.innerHTML = `⚠️ ${err.message}`;
+                }
             } finally {
                 loading.style.display = "none";
                 button.disabled = false;
