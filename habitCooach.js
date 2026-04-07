@@ -35,7 +35,7 @@ app.use("/api/habits", habitsRoute);
 app.use("/api/chat", chatRoute);
 
 // Fallback Route (Serving Frontend on any unmatched routes)
-app.get("*", (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
