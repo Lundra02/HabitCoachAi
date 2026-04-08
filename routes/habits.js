@@ -18,9 +18,16 @@ router.get("/", protect, async (req, res) => {
 router.post("/", protect, async (req, res) => {
   try {
     const { title, description } = req.body;
-    
-    if (!title) {
-      return res.status(400).json({ error: "Please add a title" });
+    if (!title || typeof title !== "string" || !title.trim()) {
+      return res.status(400).json({ error: "Please add a valid title" });
+    }
+
+    if (title.trim().length > 100) {
+      return res.status(400).json({ error: "Title exceeds maximum length of 100 characters." });
+    }
+
+    if (description && (typeof description !== "string" || description.trim().length > 500)) {
+      return res.status(400).json({ error: "Description exceeds maximum length of 500 characters." });
     }
 
     const habit = await Habit.create({
@@ -47,6 +54,14 @@ router.put("/:id", protect, async (req, res) => {
     // Check for user ownership
     if (habit.user_id.toString() !== req.user.id) {
       return res.status(401).json({ error: "User not authorized to update this habit" });
+    }
+
+    const { title, description, status } = req.body;
+    if (title !== undefined && (typeof title !== "string" || !title.trim() || title.trim().length > 100)) {
+      return res.status(400).json({ error: "Invalid title. Must be between 1 and 100 characters." });
+    }
+    if (description !== undefined && (typeof description !== "string" || description.trim().length > 500)) {
+      return res.status(400).json({ error: "Description exceeds maximum length." });
     }
 
     const updatedHabit = await Habit.findByIdAndUpdate(

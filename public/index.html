@@ -64,7 +64,7 @@
                 </div>
 
                 <form id="aiForm" class="input-area">
-                    <input type="text" id="prompt" placeholder="Ex: I want to stop procrastinating..." required />
+                    <input type="text" id="prompt" placeholder="Ex: I want to stop procrastinating..." maxlength="250" required />
                     <button class="send-btn" id="submitBtn" type="submit">
                         <span>Send</span>
                     </button>
@@ -77,10 +77,11 @@
                 <div class="habits-header">
                     <h2>My Habits</h2>
                     <form id="addHabitForm" class="add-habit-form">
-                        <input type="text" id="habitTitle" placeholder="Habit title (e.g. Drink 2L water)" required />
-                        <input type="text" id="habitDesc" placeholder="Optional description" />
-                        <button type="submit" class="send-btn">Add</button>
+                        <input type="text" id="habitTitle" placeholder="Habit title (e.g. Drink 2L water)" maxlength="100" required />
+                        <input type="text" id="habitDesc" placeholder="Optional description" maxlength="250" />
+                        <button type="submit" id="addHabitBtn" class="send-btn">Add</button>
                     </form>
+                    <p id="habitError" class="error-text"></p>
                 </div>
                 <div id="habitsList" class="habits-list">
                     <!-- Habit Cards will be injected here via JS -->

@@ -12,6 +12,10 @@ router.post("/", protect, async (req, res) => {
       return res.status(400).json({ error: "A valid prompt is required." });
     }
 
+    if (prompt.trim().length > 300) {
+      return res.status(400).json({ error: "Prompt exceeds the maximum length of 300 characters." });
+    }
+
     const apiKey = process.env.AI_API_KEY;
     if (!apiKey) {
       console.error("[Chat API] Missing AI_API_KEY in environment.");

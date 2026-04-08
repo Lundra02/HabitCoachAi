@@ -13,6 +13,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    // Helper: Global 401 Session Intercept
+    const checkUnauthorized = (res) => {
+        if (res.status === 401) {
+            localStorage.removeItem("token");
+            alert("Session expired. Please log in again.");
+            window.location.href = "login.html";
+            return true;
+        }
+        return false;
+    };
+
     // Show App Container (Index Dashboard)
     const appContainer = document.getElementById("app-container");
     if (appContainer && token) {
@@ -49,6 +60,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
             const errorText = document.getElementById("error");
+            const btn = document.getElementById("authSubmitBtn");
+
+            btn.disabled = true;
+            btn.innerHTML = "Logging in...";
+            errorText.innerHTML = "";
 
             try {
                 const res = await fetch("/api/login", {
@@ -64,6 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.location.href = "index.html";
             } catch (err) {
                 errorText.innerHTML = `⚠️ ${err.message}`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "Login";
             }
         });
     }
@@ -73,10 +92,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (signupForm) {
         signupForm.addEventListener("submit", async (e) => {
             e.preventDefault();
-            const name = document.getElementById("name").value;
-            const email = document.getElementById("email").value;
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value;
             const errorText = document.getElementById("error");
+            const btn = document.getElementById("authSubmitBtn");
+
+            if (!name || !email || !password) {
+                errorText.innerHTML = "⚠️ All fields are required.";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = "Creating account...";
+            errorText.innerHTML = "";
 
             try {
                 const res = await fetch("/api/register", {
@@ -92,6 +121,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.location.href = "index.html";
             } catch (err) {
                 errorText.innerHTML = `⚠️ ${err.message}`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "Sign Up";
             }
         });
     }
@@ -110,7 +142,15 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
 
             const userPrompt = promptInput.value.trim();
-            if (!userPrompt) return;
+            
+            if (!userPrompt) {
+                errorText.innerHTML = "⚠️ Please enter a prompt.";
+                return;
+            }
+            if (userPrompt.length > 250) {
+                errorText.innerHTML = "⚠️ Prompt is too long (Max 250 chars).";
+                return;
+            }
 
             loading.style.display = "block";
             button.disabled = true;
@@ -138,12 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const data = await res.json();
 
-                if (res.status === 401) {
-                    // Handle expired JWT or unauthorized
-                    localStorage.removeItem("token");
-                    window.location.href = "login.html";
-                    return;
-                }
+                if (checkUnauthorized(res)) return;
 
                 if (!res.ok) {
                     throw new Error(data.error || data.details || "API Connection Failed. Please try again later.");
@@ -173,6 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- HABITS Logic ---
     const addHabitForm = document.getElementById("addHabitForm");
     const habitsList = document.getElementById("habitsList");
+    const habitErrorText = document.getElementById("habitError"); // Fallback check if undefined
 
     if (appContainer && token && addHabitForm && habitsList) {
         // Fetch habits on load
@@ -181,11 +217,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 const res = await fetch("/api/habits", {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
+                if (checkUnauthorized(res)) return;
                 if (!res.ok) throw new Error("Failed to load habits");
                 const habits = await res.json();
                 renderHabits(habits);
             } catch (err) {
                 console.error(err);
+                if (habitErrorText) habitErrorText.innerHTML = "⚠️ Failed to fetch habits.";
             }
         };
 
@@ -209,10 +247,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         ${safeDesc ? `<p>${safeDesc}</p>` : ''}
                     </div>
                     <div class="habit-actions">
-                        <button class="status-btn" onclick="toggleHabit('${habit._id}', '${habit.status}')" title="Mark as ${habit.status === 'completed' ? 'Pending' : 'Completed'}">
+                        <button class="status-btn" onclick="toggleHabit('${habit._id}', '${habit.status}', this)" title="Mark as ${habit.status === 'completed' ? 'Pending' : 'Completed'}">
                             ${habit.status === 'completed' ? '↩️' : '✅'}
                         </button>
-                        <button class="delete-btn" onclick="deleteHabit('${habit._id}')" title="Delete">
+                        <button class="delete-btn" onclick="deleteHabit('${habit._id}', this)" title="Delete">
                             🗑️
                         </button>
                     </div>
@@ -221,9 +259,13 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         };
 
-        // Make global functions for inline onclick handlers
-        window.toggleHabit = async (id, currentStatus) => {
+        // Global function: Toggle Habit Status
+        window.toggleHabit = async (id, currentStatus, btnElement) => {
             const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+            const originalHTML = btnElement.innerHTML;
+            btnElement.disabled = true;
+            btnElement.innerHTML = "⏳";
+            
             try {
                 const res = await fetch(`/api/habits/${id}`, {
                     method: "PUT",
@@ -233,31 +275,67 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     body: JSON.stringify({ status: newStatus })
                 });
-                if (res.ok) fetchHabits();
+                if (checkUnauthorized(res)) return;
+                if (!res.ok) throw new Error("Could not update");
+                fetchHabits();
             } catch (err) {
-                console.error(err);
+                if(habitErrorText) habitErrorText.innerHTML = "⚠️ Server error modifying habit.";
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalHTML;
             }
         };
 
-        window.deleteHabit = async (id) => {
+        // Global function: Delete Habit
+        window.deleteHabit = async (id, btnElement) => {
             if (!confirm("Are you sure you want to delete this habit?")) return;
+            const originalHTML = btnElement.innerHTML;
+            btnElement.disabled = true;
+            btnElement.innerHTML = "⏳";
+            
             try {
                 const res = await fetch(`/api/habits/${id}`, {
                     method: "DELETE",
                     headers: { "Authorization": `Bearer ${token}` }
                 });
-                if (res.ok) fetchHabits();
+                if (checkUnauthorized(res)) return;
+                if (!res.ok) throw new Error("Could not delete");
+                fetchHabits();
             } catch (err) {
-                console.error(err);
+                if(habitErrorText) habitErrorText.innerHTML = "⚠️ Server error deleting habit.";
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalHTML;
             }
         };
 
-        // Add Habit
+        // Add Habit Form
         addHabitForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const titleInput = document.getElementById("habitTitle");
             const descInput = document.getElementById("habitDesc");
+            const titleVal = titleInput.value.trim();
+            const descVal = descInput.value.trim();
+            const addBtn = document.getElementById("addHabitBtn");
+            const errorElement = document.getElementById("habitError") || { innerHTML: "" };
+
+            errorElement.innerHTML = "";
             
+            // Empty and Length Validation
+            if (!titleVal) {
+                errorElement.innerHTML = "⚠️ Habit title cannot be empty.";
+                return;
+            }
+            if (titleVal.length > 100) {
+                errorElement.innerHTML = "⚠️ Title exceeds maximum 100 characters.";
+                return;
+            }
+            if (descVal.length > 250) {
+                errorElement.innerHTML = "⚠️ Description exceeds maximum 250 characters.";
+                return;
+            }
+
+            addBtn.disabled = true;
+            addBtn.innerText = "Adding...";
+
             try {
                 const res = await fetch("/api/habits", {
                     method: "POST",
@@ -266,21 +344,26 @@ document.addEventListener("DOMContentLoaded", () => {
                         "Authorization": `Bearer ${token}` 
                     },
                     body: JSON.stringify({
-                        title: titleInput.value,
-                        description: descInput.value
+                        title: titleVal,
+                        description: descVal
                     })
                 });
                 
+                if (checkUnauthorized(res)) return;
+
                 if (res.ok) {
                     titleInput.value = "";
                     descInput.value = "";
                     fetchHabits();
                 } else {
                     const data = await res.json();
-                    alert(data.error || "Failed to add habit");
+                    errorElement.innerHTML = `⚠️ ${data.error || "Failed to add habit"}`;
                 }
             } catch (err) {
-                console.error(err);
+                errorElement.innerHTML = "⚠️ Connection error. Please try again.";
+            } finally {
+                addBtn.disabled = false;
+                addBtn.innerText = "Add";
             }
         });
 
