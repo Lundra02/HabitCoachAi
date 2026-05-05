@@ -50,8 +50,7 @@ JWT_SECRET=super_secret_key_change_me_in_production
 # Live llmapi.ai Access Key
 AI_API_KEY=your_llmapi_key_here
 
-# (Optional) Restrict backend access to a specific frontend URL
-FRONTEND_URL=http://localhost:3000
+
 ```
 
 ### 4. Run the Server
@@ -61,7 +60,7 @@ npm run dev
 # OR
 node habitCooach.js
 ```
-The application will execute on `http://localhost:3000`.
+
 
 ## 🌐 API Reference
 

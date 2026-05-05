@@ -29,8 +29,10 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item active">Dashboard</a>
-                <a href="#" class="nav-item">Settings</a>
+                <a href="#" class="nav-item active" data-view="dashboard">Dashboard</a>
+                <a href="#" class="nav-item" data-view="planning">Planning</a>
+                <a href="#" class="nav-item" data-view="progress">Progress</a>
+                <a href="#" class="nav-item" data-view="settings">Settings</a>
             </nav>
 
             <div class="sidebar-footer">
@@ -40,56 +42,211 @@
 
         <!-- Main Content Area -->
         <main class="main-content">
-            <header class="content-header">
-                <h1>Hello, ready to crush your goals?</h1>
-                <p class="subtitle">Your 24/7 AI accountability partner</p>
-            </header>
+            <section id="dashboardView">
+                <header class="content-header">
+                    <h1>Hello, ready to crush your goals?</h1>
+                    <p class="subtitle">Your 24/7 AI accountability partner</p>
+                </header>
 
-            <div class="chat-container">
-                <div class="chat-display">
-                    <div class="message bot-message">
-                        Hello! I'm your Habit Coach. What area are you focusing on today? (Productivity, Health, or
-                        Growth?)
+                <div class="chat-container">
+                    <div class="chat-display">
+                        <div class="message bot-message">
+                            Hello! I'm your Habit Coach. What area are you focusing on today? (Productivity, Health, or
+                            Growth?)
+                        </div>
+
+                        <div id="loading" class="loading-spinner">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+
+                        <div id="response-container" class="message bot-message hidden">
+                            <p id="response"></p>
+                        </div>
                     </div>
 
-                    <div id="loading" class="loading-spinner">
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                    </div>
-
-                    <div id="response-container" class="message bot-message hidden">
-                        <p id="response"></p>
-                    </div>
-                </div>
-
-                <form id="aiForm" class="input-area">
-                    <input type="text" id="prompt" placeholder="Ex: I want to stop procrastinating..." maxlength="250" required />
-                    <button class="send-btn" id="submitBtn" type="submit">
-                        <span>Send</span>
-                    </button>
-                </form>
-            </div>
-            <p id="error" class="error-text"></p>
-
-            <!-- Habits Section -->
-            <div class="habits-section">
-                <div class="habits-header">
-                    <h2>My Habits</h2>
-                    <form id="addHabitForm" class="add-habit-form">
-                        <input type="text" id="habitTitle" placeholder="Habit title (e.g. Drink 2L water)" maxlength="100" required />
-                        <input type="text" id="habitDesc" placeholder="Optional description" maxlength="250" />
-                        <button type="submit" id="addHabitBtn" class="send-btn">Add</button>
+                    <form id="aiForm" class="input-area">
+                        <input type="text" id="prompt" placeholder="Ex: I want to stop procrastinating..." maxlength="300" required />
+                        <button class="send-btn" id="submitBtn" type="submit">
+                            <span>Send</span>
+                        </button>
                     </form>
-                    <p id="habitError" class="error-text"></p>
                 </div>
-                <div id="habitsList" class="habits-list">
-                    <!-- Habit Cards will be injected here via JS -->
+                <p id="error" class="error-text"></p>
+
+                <!-- Habits Section -->
+                <div class="habits-section">
+                    <div class="habits-header">
+                        <h2>Daily Agenda</h2>
+                        <p class="subtitle">Use Delete here for permanent removal from your account. Planning delete only hides cards from Time Blocking.</p>
+                        <form id="addHabitForm" class="add-habit-form">
+                            <input type="text" id="habitTitle" placeholder="Habit title (e.g. Drink 2L water)" maxlength="100" required />
+                            <input type="text" id="habitDesc" placeholder="Optional description" maxlength="500" />
+                            <button type="submit" id="addHabitBtn" class="send-btn">Add</button>
+                        </form>
+                        <p id="habitError" class="error-text"></p>
+                    </div>
+                    <div id="habitsList" class="habits-list">
+                        <!-- Habit Cards will be injected here via JS -->
+                    </div>
                 </div>
-            </div>
+            </section>
+
+            <section id="progressView" class="hidden">
+                <header class="content-header">
+                    <h1>Your Progress</h1>
+                    <p class="subtitle">Daily consistency breakdown across time.</p>
+                </header>
+
+                <p id="progressStatus" class="progress-status hidden"></p>
+
+                <div class="summary-grid">
+                    <article class="summary-card">
+                        <p class="summary-label">Total Completed</p>
+                        <p id="summaryCompleted" class="summary-value">0</p>
+                    </article>
+                    <article class="summary-card">
+                        <p class="summary-label">Total Missed</p>
+                        <p id="summaryMissed" class="summary-value">0</p>
+                    </article>
+                    <article class="summary-card">
+                        <p class="summary-label">Completion %</p>
+                        <p id="summaryRate" class="summary-value">0%</p>
+                    </article>
+                    <article class="summary-card">
+                        <p class="summary-label">Active Habits</p>
+                        <p id="summaryActive" class="summary-value">0</p>
+                    </article>
+                </div>
+
+                <div class="chart-grid">
+                    <article class="chart-card premium-card" id="completedCard">
+                        <div class="chart-head">
+                            <h3>Completed Performance</h3>
+                        </div>
+                        <div class="chart-loading hidden" id="completedSkeleton">
+                            <div class="skeleton-ring"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line short"></div>
+                        </div>
+                        <div class="chart-empty hidden" id="completedEmpty">No progress data yet</div>
+                        <div class="donut-wrap" id="donutWrap">
+                            <canvas id="completionPieChart"></canvas>
+                        </div>
+                        <div class="legend-modern">
+                            <div class="legend-item">
+                                <span class="legend-dot complete"></span>
+                                <span>Completed</span>
+                                <strong id="legendCompletedCount">0</strong>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot missed"></span>
+                                <span>Missed</span>
+                                <strong id="legendMissedCount">0</strong>
+                            </div>
+                            <div class="legend-item legend-total">
+                                <span>Total</span>
+                                <strong id="legendTotalCount">0</strong>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="chart-card premium-card" id="trendCard">
+                        <div class="chart-head">
+                            <h3>Consistency Trend</h3>
+                            <span id="trendGrowth" class="growth-chip">+0% this week</span>
+                        </div>
+                        <div class="trend-controls">
+                            <button class="trend-btn active" data-period="week">7 Days</button>
+                            <button class="trend-btn" data-period="month">30 Days</button>
+                            <button class="trend-btn" data-period="year">12 Months</button>
+                        </div>
+                        <div class="chart-loading hidden" id="trendSkeleton">
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line short"></div>
+                        </div>
+                        <div class="chart-empty hidden" id="trendEmpty">No trend data yet</div>
+                        <div class="trend-wrap" id="trendWrap">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="planning-section" class="hidden">
+                <header class="content-header">
+                    <h1>Planning</h1>
+                    <p class="subtitle">Design your weekly structure and keep pace for the year.</p>
+                </header>
+
+                <article class="planning-card">
+                    <h3>Date Navigator</h3>
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                        <input type="date" id="datePicker" />
+                        <button id="backToToday" class="planning-secondary-btn" type="button">Back to Today</button>
+                    </div>
+                    <p id="viewingDate" class="planning-meta" style="margin-top:10px;">Viewing: --</p>
+                    <p id="historyModeLabel" class="planning-meta hidden" style="color:#b45309;">Viewing History (Read-only)</p>
+                </article>
+
+                <div class="planning-grid">
+                    <article class="planning-card">
+                        <h3>Weekly Architect</h3>
+                        <div id="weeklyArchitectGrid" class="weekly-grid"></div>
+                    </article>
+
+                    <article class="planning-card">
+                        <h3>Yearly Progress</h3>
+                        <p id="yearlyProgressLabel" class="planning-meta">0% through the year</p>
+                        <div class="yearly-progress-track">
+                            <div id="yearlyProgressFill" class="yearly-progress-fill"></div>
+                        </div>
+                        <div id="quarterlyBreakdown" class="quarterly-grid"></div>
+                        <p id="yearlyPaceSummary" class="planning-meta yearly-pace-summary">At your current pace, you will finish the year with 0 completed habits.</p>
+                    </article>
+                </div>
+
+                <article class="planning-card">
+                    <h3>Time Blocking</h3>
+                    <p class="planning-meta">Use ✔ to complete, ↺ to undo, and 🗑 to delete directly from each habit card.</p>
+                    <div id="timeBlockingView" class="time-blocking-grid"></div>
+                </article>
+
+                <div id="planningEditModal" class="planning-modal hidden" role="dialog" aria-modal="true" aria-labelledby="planningModalTitle">
+                    <div class="planning-modal-card">
+                        <div class="planning-modal-header">
+                            <h3 id="planningModalTitle">Edit Habit Plan</h3>
+                            <button id="planningModalClose" class="planning-modal-close" type="button" aria-label="Close">X</button>
+                        </div>
+                        <p id="planningHabitTitle" class="planning-meta"></p>
+                        <label class="planning-label" for="planningTimeOfDaySelect">Time of Day</label>
+                        <select id="planningTimeOfDaySelect" class="planning-select">
+                            <option value="Morning">Morning</option>
+                            <option value="Afternoon">Afternoon</option>
+                            <option value="Evening">Evening</option>
+                        </select>
+                        <p class="planning-label">Frequency</p>
+                        <div id="planningFrequencyChecks" class="planning-frequency-grid"></div>
+                        <p id="planningModalError" class="error-text planning-modal-error"></p>
+                        <div class="planning-modal-actions">
+                            <button id="planningModalCancel" class="planning-secondary-btn" type="button">Cancel</button>
+                            <button id="planningModalSave" class="send-btn" type="button">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="settingsView" class="hidden">
+                <header class="content-header">
+                    <h1>Settings</h1>
+                    <p class="subtitle">Settings section is under construction.</p>
+                </header>
+            </section>
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 
