@@ -1,4 +1,32 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const attachPasswordToggles = (root = document) => {
+        root.querySelectorAll("input[type='password']").forEach((input) => {
+            if (input.dataset.toggleAttached === "true") return;
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "password-field";
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+
+            const toggle = document.createElement("button");
+            toggle.type = "button";
+            toggle.className = "password-toggle-btn";
+            toggle.textContent = "Show";
+            toggle.setAttribute("aria-label", "Show password");
+            wrapper.appendChild(toggle);
+
+            toggle.addEventListener("click", () => {
+                const shouldShow = input.type === "password";
+                input.type = shouldShow ? "text" : "password";
+                toggle.textContent = shouldShow ? "Hide" : "Show";
+                toggle.setAttribute("aria-label", shouldShow ? "Hide password" : "Show password");
+            });
+
+            input.dataset.toggleAttached = "true";
+        });
+    };
+
+    attachPasswordToggles();
     const token = localStorage.getItem("token");
     const path = window.location.pathname;
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -110,11 +138,57 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const loginForm = document.getElementById("loginForm");
     if (loginForm) {
+        const forgotPasswordForm = document.getElementById("forgotPasswordForm");
+        const showForgotPasswordBtn = document.getElementById("showForgotPasswordBtn");
+        const cancelForgotPasswordBtn = document.getElementById("cancelForgotPasswordBtn");
+        const forgotEmail = document.getElementById("forgotEmail");
+        const loginEmail = document.getElementById("email");
+        const errorText = document.getElementById("error");
+        let forgotCooldownTimer = null;
+        let forgotCooldownRemaining = 0;
+
+        const setForgotCooldown = (seconds = 60) => {
+            const btn = document.getElementById("forgotSubmitBtn");
+            if (!btn) return;
+
+            clearInterval(forgotCooldownTimer);
+            forgotCooldownRemaining = seconds;
+            btn.disabled = true;
+            btn.textContent = `You can resend in ${forgotCooldownRemaining}s`;
+
+            forgotCooldownTimer = setInterval(() => {
+                forgotCooldownRemaining -= 1;
+                if (forgotCooldownRemaining <= 0) {
+                    clearInterval(forgotCooldownTimer);
+                    btn.disabled = false;
+                    btn.textContent = "Send reset link";
+                    return;
+                }
+                btn.textContent = `You can resend in ${forgotCooldownRemaining}s`;
+            }, 1000);
+        };
+
+        showForgotPasswordBtn?.addEventListener("click", () => {
+            errorText.textContent = "";
+            if (forgotEmail && loginEmail?.value) {
+                forgotEmail.value = loginEmail.value.trim();
+            }
+            loginForm.classList.add("hidden");
+            forgotPasswordForm?.classList.remove("hidden");
+            forgotEmail?.focus();
+        });
+
+        cancelForgotPasswordBtn?.addEventListener("click", () => {
+            errorText.textContent = "";
+            forgotPasswordForm?.classList.add("hidden");
+            loginForm.classList.remove("hidden");
+            loginEmail?.focus();
+        });
+
         loginForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value;
-            const errorText = document.getElementById("error");
             const btn = document.getElementById("authSubmitBtn");
 
             btn.disabled = true;
@@ -145,6 +219,43 @@ document.addEventListener("DOMContentLoaded", () => {
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Login";
+            }
+        });
+
+        forgotPasswordForm?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = forgotEmail?.value.trim() || "";
+            const btn = document.getElementById("forgotSubmitBtn");
+
+            if (!email) {
+                errorText.textContent = "Warning: Please enter your email.";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Sending...";
+            errorText.textContent = "";
+
+            try {
+                const res = await fetch("/api/forgot", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Could not send reset email.");
+
+                errorText.textContent = data.message || "If that email exists, a reset link was sent.";
+                setForgotCooldown(60);
+            } catch (err) {
+                errorText.textContent = `Warning: ${err.message}`;
+                btn.disabled = false;
+                btn.textContent = "Send reset link";
+            } finally {
+                if (forgotCooldownRemaining <= 0) {
+                    btn.disabled = false;
+                    btn.textContent = "Send reset link";
+                }
             }
         });
     }
@@ -2089,7 +2200,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (typeof refreshHabits === "function") await refreshHabits();
                 const activeView = document.querySelector(".nav-item.active")?.dataset.view;
                 if (activeView === "progress") await loadProgress(activePeriod);
-                setSettingsStatus("Settings saved.", false, true);
+                setSettingsStatus(`Settings saved at ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`, false, true);
             } catch (error) {
                 setSettingsStatus(`Warning: ${error.message}`, true, true);
             } finally {

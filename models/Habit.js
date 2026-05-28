@@ -107,6 +107,10 @@ const habitSchema = new mongoose.Schema({
   timestamps: true
 });
 
+habitSchema.index({ user_id: 1 });
+habitSchema.index({ user_id: 1, "history.date": 1 });
+habitSchema.index({ sharedWithEmail: 1, shareStatus: 1 });
+
 const Habit = mongoose.model("Habit", habitSchema);
 
 export default Habit;

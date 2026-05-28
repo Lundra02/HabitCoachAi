@@ -21,8 +21,17 @@
             <form id="loginForm" class="auth-form">
                 <input type="email" id="email" placeholder="Email" required />
                 <input type="password" id="password" placeholder="Password" required />
+                <button id="showForgotPasswordBtn" class="auth-inline-link" type="button">Forgot password?</button>
                 <button type="submit" id="authSubmitBtn">Login</button>
             </form>
+
+            <form id="forgotPasswordForm" class="auth-form forgot-password-form hidden">
+                <p class="auth-helper-text">Enter your email and we will send a password reset link.</p>
+                <input type="email" id="forgotEmail" placeholder="Email" required />
+                <button type="submit" id="forgotSubmitBtn">Send reset link</button>
+                <button id="cancelForgotPasswordBtn" class="auth-inline-link" type="button">Back to login</button>
+            </form>
+
             <p class="auth-link">Don't have an account? <a href="signup.html">Sign Up</a></p>
         </main>
 

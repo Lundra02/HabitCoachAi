@@ -3,6 +3,7 @@ import axios from "axios";
 import { protect } from "../middleware/authMiddleware.js";
 import Habit from "../models/Habit.js";
 import DailyReview from "../models/DailyReview.js";
+import { buildDailyReviewMessages } from "../utils/aiPrompts.js";
 
 const router = express.Router();
 const DEFAULT_TIMEZONE = "UTC";
@@ -86,33 +87,16 @@ const buildHabitContext = (habits) => habits.slice(0, 12).map((habit) => {
 });
 
 const requestAiDailyReview = async ({ apiKey, reviewInput, habits }) => {
+  const messages = buildDailyReviewMessages({
+    reviewInput,
+    habitContext: buildHabitContext(habits)
+  });
+
   const response = await axios.post(
     "https://api.llmapi.ai/v1/chat/completions",
     {
       model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: [
-            "You are HabitCoachAI, a concise premium productivity coach.",
-            "Return ONLY valid JSON, no markdown, no extra text.",
-            "JSON schema:",
-            '{"summary":"string","recommendations":["string","string","string"],"motivationalNote":"string","suggestedTimeChanges":["string"]}',
-            "Rules:",
-            "- summary should be specific and under 90 words",
-            "- recommendations must be practical tomorrow actions",
-            "- suggestedTimeChanges should mention habit timing changes only when useful",
-            "- tone should be clear, warm, and direct"
-          ].join("\n")
-        },
-        {
-          role: "user",
-          content: JSON.stringify({
-            dailyCheckIn: reviewInput,
-            habits: buildHabitContext(habits)
-          })
-        }
-      ],
+      messages,
       temperature: 0.35
     },
     {

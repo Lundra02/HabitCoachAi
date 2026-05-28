@@ -355,6 +355,78 @@ button:active,
     text-decoration: none;
 }
 
+.auth-inline-link {
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--blue) !important;
+    box-shadow: none !important;
+    font-size: 0.88rem;
+    font-weight: 800;
+    text-align: right;
+    cursor: pointer;
+}
+
+.auth-inline-link:hover {
+    filter: brightness(1.12);
+    transform: none !important;
+}
+
+.forgot-password-form {
+    margin-top: 14px;
+}
+
+.auth-helper-text {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.password-field {
+    position: relative;
+    display: grid;
+    width: 100%;
+}
+
+.password-field input {
+    padding-right: 74px !important;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    min-height: 30px !important;
+    padding: 5px 9px !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    border-radius: 8px !important;
+    background: rgba(15, 23, 42, 0.72) !important;
+    color: var(--text-soft) !important;
+    box-shadow: none !important;
+    font-size: 0.75rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.password-toggle-btn:hover {
+    color: var(--text) !important;
+    border-color: rgba(72, 167, 255, 0.42) !important;
+    transform: translateY(-50%) !important;
+}
+
+.not-found-home-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 11px 18px;
+    color: #ffffff !important;
+}
+
 .verify-container {
     width: min(100%, 520px);
     padding: 34px;
@@ -5664,6 +5736,181 @@ body {
     }
 
     .add-habit-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Settings page polish */
+#settingsView {
+    max-width: 1480px;
+}
+
+#settingsView > .content-header {
+    margin-bottom: 28px;
+}
+
+#settingsView > .content-header .eyebrow {
+    margin-bottom: 10px;
+}
+
+#settingsView > .content-header h1 {
+    font-size: clamp(2.1rem, 4vw, 3.2rem);
+}
+
+#settingsView .settings-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 424px);
+    gap: 24px;
+    align-items: start;
+}
+
+#settingsView .settings-stack {
+    gap: 24px;
+}
+
+#settingsView .settings-card {
+    padding: clamp(22px, 2vw, 30px);
+    overflow: hidden;
+}
+
+#settingsView .settings-card-head {
+    padding: 0;
+    margin-bottom: 22px;
+}
+
+#settingsView .settings-card-head .eyebrow {
+    margin: 0 0 6px;
+    line-height: 1;
+}
+
+#settingsView .settings-card-head h2 {
+    font-size: clamp(1.15rem, 1.4vw, 1.35rem);
+    line-height: 1.16;
+}
+
+#settingsView .settings-fields {
+    gap: 16px;
+}
+
+#settingsView .settings-fields.two-col {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+#settingsView .settings-fields.three-col {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+}
+
+#settingsView .settings-fields label,
+#settingsView .settings-check-grid label,
+#settingsView .settings-toggle-grid label,
+#settingsView .delete-account-box label {
+    display: grid;
+    gap: 9px;
+    line-height: 1.2;
+}
+
+#settingsView .settings-fields input,
+#settingsView .settings-fields select,
+#settingsView .delete-account-box input {
+    margin-top: 0;
+    min-height: 54px;
+    padding: 13px 16px;
+    font-weight: 760;
+}
+
+#settingsView .settings-check-grid,
+#settingsView .settings-toggle-grid {
+    gap: 12px;
+    margin-top: 22px;
+}
+
+#settingsView .settings-check-grid label,
+#settingsView .settings-toggle-grid label {
+    display: flex;
+    min-height: 58px;
+    padding: 14px 16px;
+    border-radius: var(--ui-control-radius);
+}
+
+#settingsView .settings-toggle-grid label {
+    align-items: center;
+}
+
+#settingsView .settings-action-row,
+#settingsView .store-purchase-row {
+    border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+#settingsView .store-purchase-row {
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+#settingsView .cost-badge {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
+
+#settingsView .badges-grid {
+    grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)) !important;
+    gap: 14px !important;
+    margin-top: 0 !important;
+}
+
+#settingsView .badge-item {
+    min-height: 100px;
+    justify-content: center;
+    padding: 14px 8px;
+    border-radius: var(--ui-control-radius);
+}
+
+#settingsView .badge-icon {
+    font-size: 1.75rem;
+}
+
+#settingsView .badge-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+#settingsView .badge-desc {
+    font-size: 0.65rem;
+}
+
+#settingsView .settings-action-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#settingsView .settings-action-list button,
+#settingsView #passwordSaveBtn,
+#settingsView #deleteAccountBtn,
+#settingsView #btnExportAllCalendar,
+#settingsView #buyStreakFreezeBtn,
+#settingsView #btnRequestNotificationPermission {
+    min-height: 46px;
+    margin: 0;
+}
+
+#settingsView .delete-account-box {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 107, 139, 0.18);
+}
+
+@media (max-width: 1180px) {
+    #settingsView .settings-grid,
+    #settingsView .settings-fields.two-col,
+    #settingsView .settings-fields.three-col {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    #settingsView .settings-card {
+        padding: 18px;
+    }
+
+    #settingsView .settings-action-list {
         grid-template-columns: 1fr;
     }
 }

@@ -10,6 +10,8 @@ const router = express.Router();
 const VERIFICATION_CODE_MINUTES = 10;
 const RESET_TOKEN_BYTES = 32;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const LOGIN_LOCK_MS = 15 * 60 * 1000;
 
 const resendVerificationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -17,6 +19,14 @@ const resendVerificationLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many verification code requests. Please wait before trying again." }
+});
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many password reset requests. Please wait before trying again." }
 });
 
 // Funksion ndihmës për të gjenruar JWT
@@ -97,6 +107,27 @@ const authResponse = (user) => ({
   frozenDates: user.frozenDates,
   badges: user.badges
 });
+
+const isUserLocked = (user) => user?.lockUntil && user.lockUntil.getTime() > Date.now();
+
+const registerFailedLogin = async (user) => {
+  if (!user) return;
+
+  user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+  if (user.failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+    user.lockUntil = new Date(Date.now() + LOGIN_LOCK_MS);
+  }
+  await user.save();
+};
+
+const resetLoginLock = async (user) => {
+  if (!user) return;
+  if (user.failedLoginAttempts || user.lockUntil) {
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+  }
+};
 
 // @desc    Register a new user
 // @route   POST /api/register
@@ -270,7 +301,7 @@ router.get("/verify", async (req, res) => {
 });
 
 // Forgot password - request reset
-router.post("/forgot", async (req, res) => {
+router.post("/forgot", forgotPasswordLimiter, async (req, res) => {
   const email = normalizeEmail(req.body.email);
   if (!isValidEmail(email)) return res.status(400).json({ error: "Please enter a valid email address." });
 
@@ -342,7 +373,13 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
+    if (isUserLocked(user)) {
+      return res.status(429).json({ error: "Too many failed login attempts. Please try again later." });
+    }
+
     if (user && (await user.matchPassword(password))) {
+      await resetLoginLock(user);
+
       if (!user.isVerified) {
         let emailSent = false;
         const emailResult = await sendVerificationCode(user, req);
@@ -362,6 +399,9 @@ router.post("/login", async (req, res) => {
 
       res.json(authResponse(user));
     } else {
+      if (user) {
+        await registerFailedLogin(user);
+      }
       res.status(401).json({ error: "Invalid email or password" });
     }
   } catch (error) {

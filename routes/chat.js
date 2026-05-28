@@ -2,6 +2,7 @@ import express from "express";
 import axios from "axios";
 import { protect } from "../middleware/authMiddleware.js";
 import Habit from "../models/Habit.js";
+import { buildHabitGenerationMessages } from "../utils/aiPrompts.js";
 
 const router = express.Router();
 const MAX_PROMPT_LENGTH = 300;
@@ -101,34 +102,16 @@ const validateAiPayload = (payload, existingTitleSet) => {
 };
 
 const requestAiHabitPayload = async ({ prompt, existingHabitTitles, apiKey }) => {
+  const messages = buildHabitGenerationMessages({
+    userPrompt: prompt,
+    existingHabitTitles
+  });
+
   const response = await axios.post(
     "https://api.llmapi.ai/v1/chat/completions",
     {
       model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: [
-            "You are HabitCoachAI.",
-            "Return ONLY valid JSON, no markdown, no extra text.",
-            "JSON schema:",
-            '{"reply":"string","habits":[{"title":"string","description":"string"},{"title":"string","description":"string"},{"title":"string","description":"string"}]}',
-            "Rules:",
-            "- habits must contain exactly 3 items",
-            "- habits must be practical, daily, and action-oriented",
-            "- titles must be short and unique",
-            "- do not repeat any existing titles provided by user context"
-          ].join("\n")
-        },
-        {
-          role: "user",
-          content: [
-            `User goal: ${prompt}`,
-            `Existing habit titles to avoid: ${existingHabitTitles.length > 0 ? existingHabitTitles.join(" | ") : "None"}`,
-            "Generate the JSON now."
-          ].join("\n")
-        }
-      ],
+      messages,
       temperature: 0.4
     },
     {

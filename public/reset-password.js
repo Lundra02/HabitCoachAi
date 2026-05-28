@@ -7,6 +7,35 @@ const passwordEl = document.getElementById("password");
 const result = document.getElementById("result");
 let toastTimer = null;
 
+const attachPasswordToggles = (root = document) => {
+  root.querySelectorAll("input[type='password']").forEach((input) => {
+    if (input.dataset.toggleAttached === "true") return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "password-field";
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "password-toggle-btn";
+    toggle.textContent = "Show";
+    toggle.setAttribute("aria-label", "Show password");
+    wrapper.appendChild(toggle);
+
+    toggle.addEventListener("click", () => {
+      const shouldShow = input.type === "password";
+      input.type = shouldShow ? "text" : "password";
+      toggle.textContent = shouldShow ? "Hide" : "Show";
+      toggle.setAttribute("aria-label", shouldShow ? "Hide password" : "Show password");
+    });
+
+    input.dataset.toggleAttached = "true";
+  });
+};
+
+attachPasswordToggles();
+
 const showToast = (message = "", type = "success") => {
   if (!message) return;
   const toast = document.getElementById("appToast");

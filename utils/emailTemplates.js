@@ -213,13 +213,13 @@ export const generateVerificationEmail = ({ name, code, expiresMinutes = 10, das
   const body = `
     <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;">Hi ${escapeHtml(name || "there")},</p>
     <p style="margin:0 0 14px 0;color:${BRAND.grey};font-size:14px;">
-      Use this verification code to confirm your email address. It expires in ${expiresMinutes} minutes.
+      Welcome to <strong>HabitCoachAI</strong>. Use this verification code to confirm your email address. It expires in ${expiresMinutes} minutes.
     </p>
     <div style="margin:18px 0;padding:18px 20px;border:1px solid ${BRAND.border};border-radius:12px;background:${BRAND.soft};text-align:center;">
       <div style="font-size:34px;letter-spacing:8px;font-weight:800;color:${BRAND.dark};font-family:Arial,Helvetica,sans-serif;">${code}</div>
       <div style="margin-top:8px;color:${BRAND.grey};font-size:12px;">Verification code</div>
     </div>
-    <a href="${verifyUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">Enter code</a>
+    <a href="${verifyUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">Verify Email</a>
   `;
 
   return generateLayout({
@@ -227,7 +227,7 @@ export const generateVerificationEmail = ({ name, code, expiresMinutes = 10, das
     title: "Your Verification Code",
     intro: "Confirm your email to unlock the full HabitCoachAI experience.",
     body,
-    footer: "If you didn't create an account, you can ignore this email. Never share this code with anyone."
+    footer: "If you did not request this, you can safely ignore this email. Never share this code with anyone."
   });
 };
 
@@ -235,16 +235,16 @@ export const generateResetEmail = ({ name, token, dashboardUrl }) => {
   const resetUrl = `${safeAppUrl(dashboardUrl)}/reset-password.html#token=${encodeURIComponent(token)}`;
   const body = `
     <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;">Hi ${escapeHtml(name || "there")},</p>
-    <p style="margin:0 0 14px 0;color:${BRAND.grey};font-size:14px;">We received a request to reset your HabitCoach password. Click the button below to set a new password. The link will expire in 1 hour.</p>
-    <a href="${resetUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">Reset my password</a>
+    <p style="margin:0 0 14px 0;color:${BRAND.grey};font-size:14px;">We received a request to reset your <strong>HabitCoachAI</strong> password. Click the button below to set a new password. The link will expire in 1 hour.</p>
+    <a href="${resetUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">Reset Password</a>
   `;
 
   return generateLayout({
     preheader: "Reset your HabitCoach password.",
-    title: "Reset Password",
+    title: "Reset Your HabitCoachAI Password",
     intro: "Use the link below to reset your password.",
     body,
-    footer: "If you didn't request a password reset, you can ignore this email."
+    footer: "If you did not request this, you can safely ignore this email."
   });
 };
 

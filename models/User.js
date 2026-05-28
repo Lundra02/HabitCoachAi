@@ -25,6 +25,14 @@ const userSchema = new mongoose.Schema({
   verificationExpires: Date,
   resetToken: String,
   resetExpires: Date,
+  failedLoginAttempts: {
+    type: Number,
+    default: 0
+  },
+  lockUntil: {
+    type: Date,
+    default: null
+  },
   provider: {
     type: String,
     default: null
@@ -161,6 +169,10 @@ userSchema.pre("save", async function () {
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+userSchema.index({ resetToken: 1 }, { sparse: true });
+userSchema.index({ verificationCode: 1 }, { sparse: true });
+userSchema.index({ lockUntil: 1 }, { sparse: true });
 
 const User = mongoose.model("User", userSchema);
 
