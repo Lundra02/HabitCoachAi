@@ -59,6 +59,19 @@ const getHabitFrequency = (habit) => {
 
 const getDayIndexFromDateKey = (dateKey) => toDateFromKey(dateKey).getUTCDay();
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+const getPublicAppUrl = (req) => {
+  const configuredUrl = process.env.FRONTEND_URL || process.env.APP_URL || process.env.PUBLIC_URL || "";
+  const requestHost = req?.get?.("host");
+  const requestProto = req?.get?.("x-forwarded-proto") || req?.protocol || "https";
+  const requestUrl = requestHost ? `${String(requestProto).split(",")[0].trim()}://${requestHost}` : "";
+  const fallback = process.env.NODE_ENV === "production" ? requestUrl : `http://localhost:${process.env.PORT || 3000}`;
+
+  try {
+    return new URL(configuredUrl || requestUrl || fallback).toString().replace(/\/$/, "");
+  } catch (error) {
+    return fallback;
+  }
+};
 
 // Calculate completion % over last 7 days (including today)
 const calculateWeeklyCompletion = (history, todayKey) => {
@@ -194,7 +207,7 @@ router.post("/invite", protect, async (req, res) => {
       return res.status(400).json({ error: "You are already sharing or have invited this friend to this habit!" });
     }
 
-    const dashboardUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+    const dashboardUrl = getPublicAppUrl(req);
     const inviterName = req.user.name || req.user.email?.split("@")[0] || "A HabitCoachAI user";
     const inviteHtml = generateDuoInviteEmail({
       inviterName,

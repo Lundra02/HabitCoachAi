@@ -33,12 +33,35 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const CRON_TIMEZONE = process.env.CRON_TIMEZONE || "UTC";
-const DASHBOARD_URL = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === "production";
-const allowedOrigins = (process.env.FRONTEND_URL || "")
+const getEnvUrls = (value = "") => value
   .split(",")
-  .map((origin) => origin.trim().replace(/\/$/, ""))
+  .map((origin) => origin.trim())
   .filter(Boolean);
+const getConfiguredFrontendUrls = () => [
+  ...getEnvUrls(process.env.FRONTEND_URL || ""),
+  ...getEnvUrls(process.env.APP_URL || ""),
+  ...getEnvUrls(process.env.PUBLIC_URL || "")
+]
+  .map((origin) => origin.replace(/\/$/, ""))
+  .filter(Boolean);
+const getRequestBaseUrl = (req) => {
+  const host = req.get("host");
+  if (!host) return "";
+
+  const proto = req.get("x-forwarded-proto") || req.protocol || (isProduction ? "https" : "http");
+  const firstProto = String(proto).split(",")[0].trim();
+  return `${firstProto}://${host}`.replace(/\/$/, "");
+};
+const getDashboardUrl = (req) => {
+  const configuredUrl = getConfiguredFrontendUrls()[0];
+  if (configuredUrl) return configuredUrl;
+  if (req) return getRequestBaseUrl(req);
+  return isProduction ? "" : `http://localhost:${PORT}`;
+};
+const DASHBOARD_URL = getDashboardUrl();
+const localDevOrigins = [`http://localhost:${PORT}`, "http://localhost:3000", "http://127.0.0.1:3000"];
 const cspDirectives = {
   defaultSrc: ["'self'"],
   baseUri: ["'self'"],
@@ -78,19 +101,49 @@ app.use(helmet({
   referrerPolicy: { policy: "strict-origin-when-cross-origin" },
   noSniff: true
 }));
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin) return callback(null, true);
-    const normalizedOrigin = origin.replace(/\/$/, "");
-    if (!isProduction || allowedOrigins.length === 0 || allowedOrigins.includes(normalizedOrigin)) {
-      return callback(null, true);
-    }
-    return callback(new Error("Origin not allowed by CORS"));
-  },
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
+app.use((req, res, next) => {
+  const allowedOrigins = isProduction
+    ? getConfiguredFrontendUrls()
+    : [...getConfiguredFrontendUrls(), ...localDevOrigins];
+
+  return cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      const requestBaseUrl = getRequestBaseUrl(req);
+      const isSameHost = requestBaseUrl && normalizedOrigin === requestBaseUrl;
+
+      if (isSameHost || allowedOrigins.includes(normalizedOrigin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Origin not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+  })(req, res, next);
+});
+
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "habitcoachai",
+    nodeEnv: process.env.NODE_ENV || "development",
+    port: PORT
+  });
+});
+
+app.get("/ready", (req, res) => {
+  const mongoReady = mongoose.connection.readyState === 1;
+  res.status(mongoReady ? 200 : 503).json({
+    status: mongoReady ? "ready" : "starting",
+    mongoConnected: mongoReady,
+    frontendUrlLoaded: getConfiguredFrontendUrls().length > 0,
+    frontendUrlFallback: getConfiguredFrontendUrls().length === 0 ? getRequestBaseUrl(req) : undefined
+  });
+});
 app.use(express.json({ limit: "100kb" }));
 app.use(sanitizeRequest);
 app.use(morgan(isProduction ? "combined" : "dev"));
@@ -445,21 +498,35 @@ app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, "public", "error.html"));
 });
 
-const PORT = process.env.PORT || 3000;
-
 const startServer = async () => {
+  const envStatus = validateProductionEnv();
+  console.log("Startup configuration:", {
+    NODE_ENV: process.env.NODE_ENV || "development",
+    PORT,
+    FRONTEND_URL: getConfiguredFrontendUrls().length > 0 ? "loaded" : "not set; using request host fallback",
+    AI_API_KEY: process.env.AI_API_KEY ? "loaded" : "not set",
+    EMAIL: process.env.EMAIL_USER || process.env.SMTP_USER ? "configured" : "not set"
+  });
+
+  for (const warning of envStatus.warnings) {
+    console.warn(`Configuration warning: ${warning}`);
+  }
+
+  if (!envStatus.ok) {
+    console.error("Configuration error:", envStatus.errors.join(" "));
+    process.exit(1);
+  }
+
   try {
-    validateProductionEnv();
     await mongoose.connect(process.env.MONGO_URI, {});
-    console.log("MongoDB connected");
+    console.log("MongoDB connected: true");
 
     app.listen(PORT, () => {
       initializeEmailCronJobs();
-      console.log(`Server running on port ${PORT}`);
-      console.log("Production configuration validated.");
+      console.log(`Server listening on port ${PORT}`);
     });
   } catch (error) {
-    console.error("MongoDB connection error:", error.message);
+    console.error("Startup failed:", error.message);
     process.exit(1);
   }
 };

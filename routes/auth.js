@@ -35,20 +35,21 @@ const normalizeEmail = (email = "") => String(email).trim().toLowerCase();
 const isValidEmail = (email) => EMAIL_PATTERN.test(email);
 const isValidPassword = (password) => typeof password === "string" && password.length >= 6 && password.length <= 128;
 
-const getPublicAppUrl = () => {
+const getPublicAppUrl = (req) => {
   const fallback = process.env.NODE_ENV === "production"
     ? ""
     : `http://localhost:${process.env.PORT || 3000}`;
-  const rawUrl = (process.env.FRONTEND_URL || fallback).split(",")[0].trim().replace(/\/$/, "");
+  const configuredUrl = process.env.FRONTEND_URL || process.env.APP_URL || process.env.PUBLIC_URL || "";
+  const requestHost = req?.get?.("host");
+  const requestProto = req?.get?.("x-forwarded-proto") || req?.protocol || "https";
+  const requestUrl = requestHost ? `${String(requestProto).split(",")[0].trim()}://${requestHost}` : "";
+  const rawUrl = (configuredUrl || requestUrl || fallback).split(",")[0].trim().replace(/\/$/, "");
 
   try {
     const url = new URL(rawUrl);
-    if (process.env.NODE_ENV === "production" && url.protocol !== "https:") {
-      throw new Error("Production FRONTEND_URL must use HTTPS.");
-    }
     return url.toString().replace(/\/$/, "");
   } catch (error) {
-    throw new Error("Invalid FRONTEND_URL configuration.");
+    return fallback;
   }
 };
 
@@ -73,9 +74,9 @@ const storeVerificationCode = async (user) => {
   return code;
 };
 
-const sendVerificationCode = async (user) => {
+const sendVerificationCode = async (user, req) => {
   const code = await storeVerificationCode(user);
-  const dashboardUrl = getPublicAppUrl();
+  const dashboardUrl = getPublicAppUrl(req);
   const html = generateVerificationEmail({
     name: user.name,
     code,
@@ -133,7 +134,7 @@ router.post("/register", async (req, res) => {
     if (user) {
       let emailSent = false;
       try {
-        const emailResult = await sendVerificationCode(user);
+        const emailResult = await sendVerificationCode(user, req);
         emailSent = emailResult.ok;
         if (!emailResult.ok) {
           console.error(`Failed to send verification email to ${user.email}:`, emailResult.error?.message || emailResult.error);
@@ -224,7 +225,7 @@ router.post("/resend-verification", resendVerificationLimiter, async (req, res) 
       return res.json({ message: "Email is already verified.", alreadyVerified: true });
     }
 
-    const emailResult = await sendVerificationCode(user);
+    const emailResult = await sendVerificationCode(user, req);
     if (!emailResult.ok) {
       console.error(`Failed to resend verification email to ${user.email}:`, emailResult.error?.message || emailResult.error);
       return res.status(500).json({ error: "Could not send verification email. Check SMTP configuration." });
@@ -283,7 +284,7 @@ router.post("/forgot", async (req, res) => {
     user.resetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
     await user.save();
 
-    const dashboardUrl = getPublicAppUrl();
+    const dashboardUrl = getPublicAppUrl(req);
     const html = generateResetEmail({ name: user.name, token: resetRaw, dashboardUrl });
     const emailResult = await sendEmail(user.email, "Reset your HabitCoach password", html);
     if (!emailResult.ok) {
@@ -344,7 +345,7 @@ router.post("/login", async (req, res) => {
     if (user && (await user.matchPassword(password))) {
       if (!user.isVerified) {
         let emailSent = false;
-        const emailResult = await sendVerificationCode(user);
+        const emailResult = await sendVerificationCode(user, req);
         emailSent = emailResult.ok;
         if (!emailResult.ok) {
           console.error(`Failed to send verification email to ${user.email}:`, emailResult.error?.message || emailResult.error);

@@ -15,11 +15,12 @@ const escapeHtml = (value = "") => String(value)
   .replace(/'/g, "&#39;");
 
 const safeAppUrl = (dashboardUrl = "") => {
-  const url = new URL(dashboardUrl);
-  if (process.env.NODE_ENV === "production" && url.protocol !== "https:") {
-    throw new Error("Email links must use HTTPS in production.");
+  try {
+    const url = new URL(dashboardUrl);
+    return url.toString().replace(/\/$/, "");
+  } catch (error) {
+    return "#";
   }
-  return url.toString().replace(/\/$/, "");
 };
 
 const generateLayout = ({ preheader, title, intro, body, footer }) => `
