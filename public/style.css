@@ -5482,3 +5482,189 @@ textarea:focus,
     }
 }
 
+/* Deployment polish: keeps the production UI from feeling clipped or noisy. */
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+.app-container {
+    height: 100dvh;
+    min-height: 0;
+}
+
+.main-content {
+    min-height: 0;
+    padding: clamp(28px, 3vw, 44px);
+    scroll-padding-top: 28px;
+}
+
+.view-panel {
+    padding-bottom: 48px;
+}
+
+.premium-panel,
+.settings-card,
+.social-card,
+.chart-card,
+.planning-card,
+.summary-card,
+.stat-card {
+    overflow: visible;
+}
+
+.premium-panel {
+    overflow: hidden;
+}
+
+.panel-head,
+.settings-card-head,
+.social-card-head {
+    align-items: flex-start;
+    margin: 0;
+    padding-top: 0;
+}
+
+.panel-head {
+    padding: 20px 22px 16px;
+}
+
+.panel-head .eyebrow,
+.settings-card-head .eyebrow,
+.social-card-head .eyebrow {
+    margin-top: 0;
+}
+
+.daily-review-panel {
+    margin-top: 22px;
+}
+
+.review-grid {
+    grid-template-columns: minmax(360px, 670px) minmax(320px, 1fr);
+    align-items: start;
+    padding: 22px;
+}
+
+.review-grid:has(.daily-review-output.hidden) {
+    grid-template-columns: minmax(360px, 670px);
+}
+
+.daily-review-form {
+    max-width: 670px;
+}
+
+.daily-review-form textarea {
+    min-height: 78px;
+}
+
+.daily-review-output.hidden {
+    display: none !important;
+}
+
+.habits-section {
+    margin-top: 22px;
+    padding: 22px;
+}
+
+.habits-header {
+    grid-template-columns: minmax(280px, 0.72fr) minmax(420px, 1fr);
+    align-items: end;
+    gap: 22px;
+}
+
+.add-habit-form {
+    grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) 140px minmax(86px, auto);
+}
+
+.empty-state,
+.chart-empty,
+.social-empty-state {
+    min-height: 128px;
+    display: grid;
+    place-items: center;
+    border-style: solid;
+    background: rgba(8, 13, 28, 0.62);
+}
+
+.empty-state::after,
+.chart-empty::after,
+.social-empty-state::after {
+    display: none;
+}
+
+.social-page {
+    padding-top: 2px;
+}
+
+.social-layout {
+    gap: 26px;
+}
+
+.social-card {
+    padding: clamp(22px, 2vw, 30px);
+}
+
+.social-card .settings-card-head {
+    padding: 0;
+}
+
+.social-card .settings-card-head h2,
+.panel-head h2,
+.habits-header h2 {
+    line-height: 1.22;
+}
+
+.social-page .settings-copy {
+    max-width: 72ch;
+}
+
+.social-empty-state p {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 1180px) {
+    .review-grid,
+    .review-grid:has(.daily-review-output.hidden),
+    .habits-header {
+        grid-template-columns: 1fr;
+    }
+
+    .daily-review-form {
+        max-width: none;
+    }
+
+    .add-habit-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    html,
+    body {
+        overflow: auto;
+    }
+
+    .app-container {
+        min-height: 100dvh;
+        height: auto;
+    }
+
+    .main-content {
+        min-height: 100dvh;
+        height: auto;
+        padding: 20px 16px 36px;
+    }
+
+    .review-grid,
+    .habits-section,
+    .panel-head {
+        padding: 16px;
+    }
+
+    .add-habit-form {
+        grid-template-columns: 1fr;
+    }
+}
+
