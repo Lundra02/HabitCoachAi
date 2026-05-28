@@ -3,57 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - AI Habit Coach</title>
+    <title>Sign Up - HabitCoachAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <style>
-        .auth-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 20px;
-        }
-        .auth-form input {
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: 1px solid #dfe6e9;
-            background: #f8f9fa;
-        }
-        .auth-form button {
-            width: 100%;
-        }
-        .auth-link {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 0.9rem;
-        }
-        .auth-link a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: bold;
-        }
-    </style>
 </head>
 <body>
 
-<div class="glass-container">
-    <header>
-        <h1>🌿 HabitCoach<span>AI</span></h1>
-        <p class="subtitle">Create an account to start tracking.</p>
-    </header>
+<div class="auth-page-wrapper">
+    <div class="glass-container">
+        <header>
+            <div class="auth-brand-mark">H</div>
+            <h1>HabitCoach<span>AI</span></h1>
+            <p class="subtitle">Create an account to start building momentum.</p>
+        </header>
 
-    <main>
-        <form id="signupForm" class="auth-form">
-            <input type="text" id="name" placeholder="Full Name" required />
-            <input type="email" id="email" placeholder="Email" required />
-            <input type="password" id="password" placeholder="Password (min 6 chars)" required minlength="6"/>
-            <button type="submit" id="authSubmitBtn">Sign Up</button>
-        </form>
-        <p class="auth-link">Already have an account? <a href="login.html">Login</a></p>
-    </main>
+        <main>
+            <form id="signupForm" class="auth-form">
+                <input type="text" id="name" placeholder="Full Name" required />
+                <input type="email" id="email" placeholder="Email" required />
+                <input type="password" id="password" placeholder="Password (min 6 chars)" required minlength="6"/>
+                <button type="submit" id="authSubmitBtn">Sign Up</button>
+            </form>
+            <p class="auth-link">Already have an account? <a href="login.html">Login</a></p>
+        </main>
 
-    <footer>
-        <p id="error" class="error-text"></p>
-    </footer>
+        <footer>
+            <p id="error" class="error-text"></p>
+        </footer>
+    </div>
 </div>
 
 <script src="script.js"></script>

@@ -1,0 +1,313 @@
+==============================================================================
+                         HABITCOACHAPI - PROJECT OVERVIEW
+==============================================================================
+
+PROJECT NAME & PURPOSE
+==============================================================================
+Project Name: HabitCoachAI
+
+Purpose: HabitCoachAI is a full-stack web application designed to help users 
+track their daily habits with an integrated AI Chat Assistant (powered by 
+llmapi.ai) that acts as a 24/7 accountability partner. Users can create, manage, 
+and monitor their habit progress while receiving personalized AI-powered guidance 
+and encouragement to maintain their habits consistently.
+
+Key Value Proposition: Combines habit tracking functionality with AI coaching 
+to provide users with both data-driven insights and motivational support for 
+building lasting behavioral changes.
+
+
+TECH STACK
+==============================================================================
+Languages & Environments:
+  • Node.js (v18+) - Backend runtime environment
+  • Vanilla JavaScript (ES6+) - Frontend scripting
+  • HTML5 - Frontend markup
+  • CSS3 - Frontend styling
+  • JSON - Data format
+
+Frameworks & Libraries:
+
+  Backend:
+    • Express.js (^5.2.1) - REST API framework
+    • Mongoose (^9.3.3) - MongoDB Object Data Modeling
+    • Node.js built-in modules (path, fs, url handling)
+
+  Database:
+    • MongoDB - NoSQL database (local or Atlas)
+
+  Authentication & Security:
+    • JWT (JSON Web Tokens, ^9.0.3) - Stateless authentication
+    • bcryptjs (^3.0.3) - Password hashing and encryption
+
+  Frontend Utilities:
+    • Vanilla JavaScript (DOM manipulation, fetch/axios calls)
+
+  External APIs & Services:
+    • llmapi.ai (gpt-4o-mini) - AI Chat integration via axios
+    • axios (^1.14.0) - HTTP client for API requests
+
+  Infrastructure:
+    • CORS (^2.8.6) - Cross-Origin Resource Sharing
+    • dotenv (^17.3.1) - Environment variable management
+
+Architecture Pattern: MERN Stack (MongoDB, Express, Vanilla JavaScript, Node.js)
+
+
+ARCHITECTURE
+==============================================================================
+Folder Structure Overview:
+
+  Root Directory (habitCooach.js)
+    Main Express server file that initializes the application and routes
+
+  ├── public/
+  │   ├── index.html - Main landing/dashboard page
+  │   ├── login.html - User login page
+  │   ├── signup.html - User registration page
+  │   ├── script.js - Frontend JavaScript logic
+  │   └── style.css - Global styling
+  │
+  ├── models/
+  │   ├── User.js - User schema (name, email, password with bcrypt)
+  │   └── Habit.js - Habit schema (title, description, status, history)
+  │
+  ├── routes/
+  │   ├── auth.js - Authentication endpoints (register, login)
+  │   ├── habits.js - Habit CRUD operations (protected)
+  │   ├── chat.js - AI chat integration endpoints (protected)
+  │   └── progress.js - User progress tracking
+  │
+  ├── middleware/
+  │   └── authMiddleware.js - JWT verification and user protection
+  │
+  ├── package.json - NPM dependencies and scripts
+  └── .env - Environment variables (not in repo)
+
+Client-Server Separation:
+  • Frontend (Client): Static files served from /public directory using vanilla JS
+  • Backend (Server): Express.js API running on configurable port (default 3000)
+  • Communication: REST API via JSON over HTTP with JWT authentication
+  • CORS Enabled: Supports cross-origin requests from different frontend hosts
+
+Database Schema:
+  • User Collection: Stores user profiles with bcrypt-hashed passwords
+  • Habit Collection: Stores habits linked to users with completion history
+  • Relationship: One-to-Many (One User → Multiple Habits)
+
+
+KEY FEATURES
+==============================================================================
+
+1. User Authentication & Security
+   ✓ Secure user registration with email validation
+   ✓ Login with password verification
+   ✓ JWT-based authentication (30-day expiration)
+   ✓ bcryptjs password hashing (salt rounds: 10)
+   ✓ Protected routes using middleware authentication
+   ✓ Bearer token validation on sensitive endpoints
+
+2. Habit Tracking (CRUD Operations)
+   ✓ Create habits with title and description
+   ✓ Read/retrieve all habits for authenticated user
+   ✓ Update habits (mark as pending, completed, or missed)
+   ✓ Delete habits (soft delete or permanent removal)
+   ✓ Complete data isolation: Users can only access their own habits
+   ✓ Habit status enum: "pending", "completed", "missed"
+   ✓ Timestamps: Automatic creation and update timestamps
+
+3. Habit History Tracking
+   ✓ Daily habit status tracking per user timezone
+   ✓ History entries locked after timezone-specific date changes
+   ✓ Date-based habit recording (YYYY-MM-DD format)
+   ✓ Progress visualization over time
+
+4. AI Chat Assistant (24/7 Accountability Partner)
+   ✓ Integrated AI-powered chat endpoint
+   ✓ Powered by llmapi.ai (gpt-4o-mini model)
+   ✓ Handles user prompts up to 300 characters
+   ✓ Built-in timeout protection (15 seconds max)
+   ✓ Retry mechanism (up to 2 attempts for failed requests)
+   ✓ Automatic AbortController for graceful API failure handling
+   ✓ Timezone-aware responses
+
+5. Progress Tracking
+   ✓ Dedicated progress route for analytics
+   ✓ Habit completion metrics
+   ✓ Historical data analysis
+
+6. Frontend User Interface
+   ✓ Responsive multi-page design
+   ✓ Login and signup forms with validation
+   ✓ Dashboard for habit management
+   ✓ Chat interface for AI interactions
+   ✓ Real-time habit status updates
+
+
+ENVIRONMENT & SETUP
+==============================================================================
+
+Required Environment Variables (.env file):
+
+  MONGO_URI
+    Description: MongoDB connection string
+    Example: mongodb://localhost:27017/habitcoach
+    Alternative: MongoDB Atlas URI (mongodb+srv://...)
+    Required: Yes
+
+  JWT_SECRET
+    Description: Secret key for signing JWT tokens
+    Example: super_secret_key_change_me_in_production
+    Security Note: Use a strong, random string in production
+    Required: Yes
+    Recommendation: Minimum 32 characters, use random string generator
+
+  AI_API_KEY
+    Description: API key for llmapi.ai service
+    Obtain from: https://llmapi.ai/
+    Required: Yes
+
+  PORT (Optional)
+    Description: Server port number
+    Default: 3000
+    Example: 3000 or 5000
+
+  FRONTEND_URL (Optional)
+    Description: CORS allowed origin for frontend
+    Default: "*" (all origins)
+    Example: https://localhost:3000 or https://myapp.vercel.app
+    Recommendation: Set specific URL in production
+
+How to Run the Project:
+==============================================================================
+
+Prerequisites:
+  • Node.js version 18 or higher installed
+  • MongoDB running locally (port 27017) OR MongoDB Atlas account
+  • npm or yarn package manager
+
+Step 1: Install Dependencies
+  $ npm install
+
+Step 2: Create .env file
+  Create a file named .env in the project root with required variables:
+  
+  MONGO_URI=mongodb://localhost:27017/habitcoach
+  JWT_SECRET=your_super_secret_key_here
+  AI_API_KEY=your_llmapi_key_here
+  PORT=3000
+  FRONTEND_URL=http://localhost:3000
+
+Step 3: Start MongoDB (if using local)
+  $ mongod
+  (Keep this running in a separate terminal)
+
+Step 4: Run Development Server
+  Development mode with auto-reload:
+  $ npm run dev
+  
+  OR standard mode:
+  $ npm start
+
+Step 5: Access the Application
+  Open browser to: http://localhost:3000
+  - Sign up for a new account
+  - Create habits
+  - Track progress
+  - Chat with AI assistant
+
+Available NPM Scripts:
+  $ npm start     - Run the server normally
+  $ npm run dev   - Run with auto-reload (node --watch)
+  $ npm test      - Run tests (not yet configured)
+
+Deployment Configuration:
+==============================================================================
+
+For hosting platforms (Render, Railway, Heroku, etc.):
+
+  1. Database Setup:
+     - Create a MongoDB Atlas cluster
+     - Retrieve connection string with credentials
+     - Set MONGO_URI in platform environment variables
+
+  2. Build Command:
+     - Typically none needed for Node.js projects
+
+  3. Start Command:
+     - node habitCooach.js
+
+  4. Environment Variables:
+     Set in platform dashboard:
+     - MONGO_URI (MongoDB Atlas connection string)
+     - JWT_SECRET (strong random string, e.g., 32+ characters)
+     - AI_API_KEY (llmapi.ai API key)
+     - NODE_ENV=production (optional)
+     - FRONTEND_URL (your deployed frontend URL)
+
+  5. CORS Configuration:
+     - Update FRONTEND_URL to match your deployed frontend domain
+     - Ensure it matches Netlify/Vercel deployment URL
+     - Example: https://myapp.netlify.app
+
+  6. Database Backups:
+     - Use MongoDB Atlas automatic backups (included in M0 free tier)
+     - Monitor database usage and upgrade as needed
+
+
+API ENDPOINTS REFERENCE
+==============================================================================
+
+Authentication (Public):
+  POST /api/register
+    - Create new user account
+    - Body: { name, email, password }
+    - Response: { _id, name, email, token }
+
+  POST /api/login
+    - Authenticate existing user
+    - Body: { email, password }
+    - Response: { _id, name, email, token }
+
+Habits (Protected - Requires JWT):
+  GET /api/habits
+    - Get all habits for authenticated user
+    - Headers: Authorization: Bearer <token>
+    - Response: Array of habit objects
+
+  POST /api/habits
+    - Create a new habit
+    - Headers: Authorization: Bearer <token>
+    - Body: { title, description }
+    - Response: Created habit object
+
+  PUT /api/habits/:id
+    - Update existing habit
+    - Headers: Authorization: Bearer <token>
+    - Body: { title, description, status }
+    - Response: Updated habit object
+
+  DELETE /api/habits/:id
+    - Delete a habit
+    - Headers: Authorization: Bearer <token>
+    - Response: Confirmation message
+
+Chat (Protected - Requires JWT):
+  POST /api/chat
+    - Send message to AI assistant
+    - Headers: Authorization: Bearer <token>
+    - Body: { prompt }
+    - Response: { response, timestamp }
+    - Timeout: 15 seconds max
+
+Progress (Protected - Requires JWT):
+  GET /api/progress
+    - Get user progress metrics
+    - Headers: Authorization: Bearer <token>
+    - Response: Progress statistics
+
+==============================================================================
+                            END OF PROJECT OVERVIEW
+==============================================================================
+
+npm run email:test -- lundrim.maxhuni@umib.net

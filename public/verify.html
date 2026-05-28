@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - HabitCoachAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="auth-page-wrapper">
+        <main class="verify-container" aria-labelledby="verifyTitle">
+            <div class="auth-brand-mark">H</div>
+            <p class="eyebrow">Email verification</p>
+            <h1 id="verifyTitle">Enter your 6-digit code</h1>
+            <p class="subtitle">
+                We sent a short-lived verification code to <strong id="verifyEmailLabel">your email</strong>.
+            </p>
+
+            <form id="verifyForm" class="verify-form">
+                <div class="code-input-grid" aria-label="Verification code">
+                    <input class="code-input" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Digit 1" />
+                    <input class="code-input" inputmode="numeric" maxlength="1" aria-label="Digit 2" />
+                    <input class="code-input" inputmode="numeric" maxlength="1" aria-label="Digit 3" />
+                    <input class="code-input" inputmode="numeric" maxlength="1" aria-label="Digit 4" />
+                    <input class="code-input" inputmode="numeric" maxlength="1" aria-label="Digit 5" />
+                    <input class="code-input" inputmode="numeric" maxlength="1" aria-label="Digit 6" />
+                </div>
+
+                <div class="verify-meta-row">
+                    <span id="verifyCountdown">Code expires in 10:00</span>
+                    <button id="resendCodeBtn" class="verify-link-btn" type="button">Resend code</button>
+                </div>
+
+                <button id="verifySubmitBtn" class="send-btn verify-submit" type="submit">Verify email</button>
+            </form>
+
+            <p id="verifyMessage" class="verify-message" role="status" aria-live="polite"></p>
+            <p class="auth-link">Wrong account? <a href="login.html">Back to login</a></p>
+        </main>
+    </div>
+
+    <div id="appToast" class="app-toast hidden" role="status" aria-live="polite"></div>
+    <script src="verify.js"></script>
+</body>
+</html>

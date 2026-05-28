@@ -56,6 +56,11 @@ const habitSchema = new mongoose.Schema({
     enum: ["Morning", "Afternoon", "Evening"],
     default: "Morning"
   },
+  difficulty: {
+    type: String,
+    enum: ["easy", "medium", "hard"],
+    default: "medium"
+  },
   yearlyGoal: {
     type: Number,
     default: 365,
@@ -65,6 +70,38 @@ const habitSchema = new mongoose.Schema({
   history: {
     type: [habitHistorySchema],
     default: []
+  },
+  isShared: {
+    type: Boolean,
+    default: false
+  },
+  sharedWithEmail: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  sharedHabitId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Habit",
+    default: null
+  },
+  shareStatus: {
+    type: String,
+    enum: ["none", "pending", "accepted"],
+    default: "none"
+  },
+  invitedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
+  emoji: {
+    type: String,
+    default: "📅"
+  },
+  color: {
+    type: String,
+    default: "#2563eb"
   }
 }, {
   timestamps: true

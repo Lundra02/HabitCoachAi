@@ -113,3 +113,139 @@ export const generateEveningEmail = ({ completed, missed, successRate }) => {
   });
 };
 
+export const generateMissedHabitReminderEmail = ({ pendingHabits, dashboardUrl }) => {
+  const listMarkup = pendingHabits.length
+    ? pendingHabits
+        .map(
+          (habit) => `
+            <li style="margin:0 0 10px 0;color:${BRAND.dark};font-size:15px;line-height:1.5;">
+              <strong>${habit.title}</strong>
+              <span style="color:${BRAND.grey};"> (${habit.timeOfDay})</span>
+            </li>
+          `
+        )
+        .join("")
+    : `<li style="color:${BRAND.grey};font-size:15px;line-height:1.5;">No pending habits right now.</li>`;
+
+  const body = `
+    <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;font-weight:600;">Still pending today:</p>
+    <ul style="margin:0 0 18px 18px;padding:0;">
+      ${listMarkup}
+    </ul>
+    <a href="${dashboardUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
+      Finish Today's Habits
+    </a>
+  `;
+
+  return generateLayout({
+    preheader: "You still have habits waiting today.",
+    title: "Pending Habit Reminder",
+    intro: "A small finish today keeps your streak easier tomorrow.",
+    body,
+    footer: "HabitCoachAI automated notification"
+  });
+};
+
+export const generateWeeklyProgressEmail = ({ completed, missed, completionRate, bestDay, dashboardUrl }) => {
+  const progressWidth = Math.max(0, Math.min(100, completionRate));
+  const body = `
+    <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;font-weight:600;">Last 7 days</p>
+    <div style="width:100%;background:${BRAND.border};border-radius:999px;height:12px;overflow:hidden;margin:0 0 14px 0;">
+      <div style="width:${progressWidth}%;height:12px;background:${BRAND.green};"></div>
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0 8px;">
+      <tr>
+        <td style="padding:12px;border:1px solid ${BRAND.border};border-radius:8px;background:${BRAND.soft};font-size:14px;color:${BRAND.dark};">
+          Completed: <strong>${completed}</strong>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px;border:1px solid ${BRAND.border};border-radius:8px;background:${BRAND.soft};font-size:14px;color:${BRAND.dark};">
+          Missed: <strong>${missed}</strong>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px;border:1px solid ${BRAND.border};border-radius:8px;background:${BRAND.soft};font-size:14px;color:${BRAND.dark};">
+          Completion Rate: <strong>${completionRate}%</strong>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px;border:1px solid ${BRAND.border};border-radius:8px;background:${BRAND.soft};font-size:14px;color:${BRAND.dark};">
+          Best Day: <strong>${bestDay || "No completed habits yet"}</strong>
+        </td>
+      </tr>
+    </table>
+    <a href="${dashboardUrl}" style="display:inline-block;margin-top:10px;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
+      Review Progress
+    </a>
+  `;
+
+  return generateLayout({
+    preheader: "Your weekly habit progress report is ready.",
+    title: "Weekly Progress Report",
+    intro: "Here is your consistency snapshot from the last 7 days.",
+    body,
+    footer: "HabitCoachAI automated notification"
+  });
+};
+
+export const generateVerificationEmail = ({ name, code, expiresMinutes = 10, dashboardUrl }) => {
+  const verifyUrl = `${dashboardUrl.replace(/\/$/, "")}/verify.html`;
+  const body = `
+    <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;">Hi ${name || "there"},</p>
+    <p style="margin:0 0 14px 0;color:${BRAND.grey};font-size:14px;">
+      Use this verification code to confirm your email address. It expires in ${expiresMinutes} minutes.
+    </p>
+    <div style="margin:18px 0;padding:18px 20px;border:1px solid ${BRAND.border};border-radius:12px;background:${BRAND.soft};text-align:center;">
+      <div style="font-size:34px;letter-spacing:8px;font-weight:800;color:${BRAND.dark};font-family:Arial,Helvetica,sans-serif;">${code}</div>
+      <div style="margin-top:8px;color:${BRAND.grey};font-size:12px;">Verification code</div>
+    </div>
+    <a href="${verifyUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">Enter code</a>
+  `;
+
+  return generateLayout({
+    preheader: "Verify your HabitCoach account.",
+    title: "Your Verification Code",
+    intro: "Confirm your email to unlock the full HabitCoachAI experience.",
+    body,
+    footer: "If you didn't create an account, you can ignore this email. Never share this code with anyone."
+  });
+};
+
+export const generateResetEmail = ({ name, token, dashboardUrl }) => {
+  const resetUrl = `${dashboardUrl.replace(/\/$/, "")}/reset-password?token=${token}`;
+  const body = `
+    <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;">Hi ${name || "there"},</p>
+    <p style="margin:0 0 14px 0;color:${BRAND.grey};font-size:14px;">We received a request to reset your HabitCoach password. Click the button below to set a new password. The link will expire in 1 hour.</p>
+    <a href="${resetUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">Reset my password</a>
+  `;
+
+  return generateLayout({
+    preheader: "Reset your HabitCoach password.",
+    title: "Reset Password",
+    intro: "Use the link below to reset your password.",
+    body,
+    footer: "If you didn't request a password reset, you can ignore this email."
+  });
+};
+
+export const generateDuoInviteEmail = ({ inviterName, habitTitle, dashboardUrl }) => {
+  const body = `
+    <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;">Hi there,</p>
+    <p style="margin:0 0 14px 0;color:${BRAND.grey};font-size:14px;">
+      <strong>${inviterName || "A HabitCoachAI user"}</strong> invited you to build the habit
+      <strong>${habitTitle || "Untitled Habit"}</strong> together.
+    </p>
+    <a href="${dashboardUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
+      Open Pending Invitations
+    </a>
+  `;
+
+  return generateLayout({
+    preheader: "You have a new Duo habit invitation.",
+    title: "New Duo Invitation",
+    intro: "A friend wants to build consistency with you.",
+    body,
+    footer: "Open HabitCoachAI and go to Duos & Social to accept or deny this invitation."
+  });
+};

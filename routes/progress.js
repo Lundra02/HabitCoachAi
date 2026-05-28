@@ -1,5 +1,6 @@
 import express from "express";
 import Habit from "../models/Habit.js";
+import User from "../models/User.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -46,6 +47,39 @@ const shiftDateKey = (key, deltaDays) => {
 
 const dateKeyInRange = (key, startKey, endKey) => key >= startKey && key <= endKey;
 
+const getDayIndexFromKey = (dateKey) => {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCDay();
+};
+
+const getHabitFrequency = (habit) => {
+  if (!Array.isArray(habit.frequency) || habit.frequency.length === 0) {
+    return [0, 1, 2, 3, 4, 5, 6];
+  }
+  const normalizedDays = habit.frequency
+    .map((day) => Number(day))
+    .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6);
+  return normalizedDays.length > 0 ? normalizedDays : [0, 1, 2, 3, 4, 5, 6];
+};
+
+const getActiveDaysFromSettings = (user) => {
+  const defaults = user?.settings?.habitDefaults || {};
+  if (defaults.frequencyPreset === "weekdays") return [1, 2, 3, 4, 5];
+  if (defaults.frequencyPreset === "custom" && Array.isArray(defaults.customFrequency) && defaults.customFrequency.length) {
+    const days = defaults.customFrequency
+      .map((day) => Number(day))
+      .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6);
+    return days.length ? [...new Set(days)] : [1, 2, 3, 4, 5];
+  }
+  return [0, 1, 2, 3, 4, 5, 6];
+};
+
+const isHabitScheduledForDate = (habit, dateKey, activeDays) => {
+  const dayIndex = getDayIndexFromKey(dateKey);
+  return activeDays.includes(dayIndex) && getHabitFrequency(habit).includes(dayIndex);
+};
+
 const monthName = (monthIndex) => {
   const names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   return names[monthIndex];
@@ -72,7 +106,7 @@ const getDateRange = (period, timezone) => {
   }
 };
 
-const buildTrend = (period, startKey, endKey, dayMap) => {
+const buildTrend = (period, startKey, endKey, dayMap, scheduledDaySet = new Set()) => {
   if (period === "year") {
     const year = startKey.slice(0, 4);
     const buckets = [];
@@ -86,10 +120,12 @@ const buildTrend = (period, startKey, endKey, dayMap) => {
           missed += stats.missed;
         }
       }
+      const hasScheduledDay = [...scheduledDaySet].some((dateKey) => dateKey.startsWith(monthKey) && dateKey <= endKey);
       buckets.push({
         label: monthName(month - 1),
         completed,
-        missed
+        missed,
+        freeDay: !hasScheduledDay
       });
     }
     return buckets;
@@ -102,26 +138,39 @@ const buildTrend = (period, startKey, endKey, dayMap) => {
     trend.push({
       label: cursor,
       completed: stats.completed,
-      missed: stats.missed
+      missed: stats.missed,
+      freeDay: !scheduledDaySet.has(cursor)
     });
     cursor = shiftDateKey(cursor, 1);
   }
   return trend;
 };
 
-const getProgressForPeriod = async (userId, period, timezone) => {
+const getProgressForPeriod = async (userId, period, timezone, user) => {
   const { startKey, endKey } = getDateRange(period, timezone);
-  const habits = await Habit.find({ user_id: userId }).select("history");
+  const habits = await Habit.find({ user_id: userId }).select("history frequency");
+  const frozenDates = user?.frozenDates || [];
+  const activeDays = getActiveDaysFromSettings(user);
 
   const dayMap = new Map();
+  const scheduledDaySet = new Set();
   let completed = 0;
   let missed = 0;
 
   for (const habit of habits) {
+    let cursor = startKey;
+    while (cursor <= endKey) {
+      if (isHabitScheduledForDate(habit, cursor, activeDays)) {
+        scheduledDaySet.add(cursor);
+      }
+      cursor = shiftDateKey(cursor, 1);
+    }
+
     const history = Array.isArray(habit.history) ? habit.history : [];
     for (const entry of history) {
       if (!entry?.date || !entry?.status) continue;
       if (!dateKeyInRange(entry.date, startKey, endKey)) continue;
+      if (!isHabitScheduledForDate(habit, entry.date, activeDays)) continue;
 
       const dayStats = dayMap.get(entry.date) || { completed: 0, missed: 0 };
 
@@ -139,13 +188,21 @@ const getProgressForPeriod = async (userId, period, timezone) => {
 
   const denominator = completed + missed;
   const completionRate = denominator > 0 ? roundPercent((completed / denominator) * 100) : 0;
-  const trend = buildTrend(period, startKey, endKey, dayMap);
+  const trend = buildTrend(period, startKey, endKey, dayMap, scheduledDaySet);
 
   const currentStreak = (() => {
     let streak = 0;
     let cursor = endKey;
     while (cursor >= startKey) {
+      if (frozenDates.includes(cursor)) {
+        cursor = shiftDateKey(cursor, -1);
+        continue;
+      }
       const stats = dayMap.get(cursor) || { completed: 0, missed: 0 };
+      if (!scheduledDaySet.has(cursor)) {
+        cursor = shiftDateKey(cursor, -1);
+        continue;
+      }
       if (stats.completed > 0 && stats.missed === 0) {
         streak += 1;
         cursor = shiftDateKey(cursor, -1);
@@ -179,7 +236,8 @@ const getProgressForPeriod = async (userId, period, timezone) => {
 const createProgressHandler = (period) => async (req, res) => {
   try {
     const timezone = getUserTimezone(req);
-    const payload = await getProgressForPeriod(req.user.id, period, timezone);
+    const user = await User.findById(req.user.id).select("frozenDates settings.habitDefaults");
+    const payload = await getProgressForPeriod(req.user.id, period, timezone, user);
     res.status(200).json(payload);
   } catch (err) {
     res.status(500).json({ error: "Failed to load progress data.", details: err.message });

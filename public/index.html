@@ -4,102 +4,340 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Habit Coach</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>HabitCoachAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#090d16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.svg">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
 <body>
-
-    <!-- Main Application Container (Hidden until authenticated) -->
     <div id="app-container" class="app-container hidden">
-
-        <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" aria-label="Primary navigation">
             <div class="sidebar-header">
-                <h2>🌿 HabitCoach<span>AI</span></h2>
+                <div class="brand-mark" aria-hidden="true">H</div>
+                <div>
+                    <h2>HabitCoach<span>AI</span></h2>
+                    <p>Personal operating system</p>
+                </div>
             </div>
 
-            <div class="user-profile">
-                <div class="avatar">👤</div>
-                <div class="user-info">
-                    <p class="user-name" id="userNameDisplay">Welcome Back!</p>
-                    <p class="user-role">Premium Member</p>
+            <div class="user-profile gamified-profile">
+                <div class="profile-header-row">
+                    <div class="avatar" id="userAvatar">HC</div>
+                    <div class="user-info">
+                        <p class="user-name" id="userNameDisplay">Welcome Back</p>
+                        <p class="user-role" id="userLevelBadge">Level 1</p>
+                    </div>
                 </div>
+                <div class="profile-xp-row">
+                    <div class="xp-bar-container">
+                        <div class="xp-bar-fill" id="userXpFill" style="width: 0%;"></div>
+                    </div>
+                    <span class="xp-text" id="userXpText">0 / 100 XP</span>
+                </div>
+                <div class="profile-freeze-row">
+                    <span>❄️ Freezes: <strong id="userStreakFreezesDisplay">0</strong></span>
+                </div>
+            </div>
+
+            <div id="pwaInstallCard" class="pwa-install-card hidden">
+                <p>📱 Install HabitCoach on your screen for quick offline access!</p>
+                <button type="button" id="pwaInstallBtn" class="planning-secondary-btn" style="margin: 6px 0 0 0; width: 100%; min-height: 32px; padding: 4px 8px; font-size: 0.8rem;">Install App</button>
             </div>
 
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-view="dashboard">Dashboard</a>
-                <a href="#" class="nav-item" data-view="planning">Planning</a>
-                <a href="#" class="nav-item" data-view="progress">Progress</a>
-                <a href="#" class="nav-item" data-view="settings">Settings</a>
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="9"></rect>
+                            <rect x="14" y="3" width="7" height="5"></rect>
+                            <rect x="14" y="12" width="7" height="9"></rect>
+                            <rect x="3" y="16" width="7" height="5"></rect>
+                        </svg>
+                    </span>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item" data-view="planning">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </span>
+                    Planning
+                </a>
+                <a href="#" class="nav-item" data-view="progress">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                    </span>
+                    Progress
+                </a>
+                <a href="#" class="nav-item" data-view="settings">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </span>
+                    Settings
+                </a>
+                <a href="#" class="nav-item" data-view="social">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </span>
+                    Duos & Social
+                </a>
             </nav>
 
+            <div class="sidebar-insight">
+                <p class="eyebrow">AI brief</p>
+                <strong>Build momentum one focused block at a time.</strong>
+            </div>
+
             <div class="sidebar-footer">
-                <button id="logoutBtn" class="logout-btn">Logout</button>
+                <button id="logoutBtn" class="logout-btn">Log out</button>
             </div>
         </aside>
 
-        <!-- Main Content Area -->
         <main class="main-content">
-            <section id="dashboardView">
-                <header class="content-header">
-                    <h1>Hello, ready to crush your goals?</h1>
-                    <p class="subtitle">Your 24/7 AI accountability partner</p>
+            <section id="dashboardView" class="view-panel">
+                <header class="content-header dashboard-hero">
+                    <div>
+                        <p class="eyebrow">Today command center</p>
+                        <h1>Hello, ready to move your habits forward?</h1>
+                        <p class="subtitle">AI coaching, habit tracking, and weekly planning in one focused workspace.</p>
+                    </div>
+                    <div class="hero-meta">
+                        <span id="todayLabel">Today</span>
+                        <strong>Live dashboard</strong>
+                    </div>
                 </header>
 
-                <div class="chat-container">
-                    <div class="chat-display">
-                        <div class="message bot-message">
-                            Hello! I'm your Habit Coach. What area are you focusing on today? (Productivity, Health, or
-                            Growth?)
+                <div class="dashboard-stats" aria-label="Dashboard statistics">
+                    <article class="stat-card accent-green">
+                        <div class="stat-icon">C</div>
+                        <p class="stat-label">Habits Completed Today</p>
+                        <p id="dashboardCompletedToday" class="stat-value">0</p>
+                        <span class="stat-hint">Completed from today's plan</span>
+                    </article>
+                    <article class="stat-card accent-blue">
+                        <div class="stat-icon">S</div>
+                        <p class="stat-label">Current Streak</p>
+                        <p id="dashboardCurrentStreak" class="stat-value">0</p>
+                        <span class="stat-hint">Clean completion days</span>
+                    </article>
+                    <article class="stat-card accent-amber">
+                        <div class="stat-icon">W</div>
+                        <p class="stat-label">Weekly Consistency</p>
+                        <p id="dashboardWeeklyConsistency" class="stat-value">0%</p>
+                        <span class="stat-hint">Last 7 days completed vs missed</span>
+                    </article>
+                    <article class="stat-card accent-violet">
+                        <div class="stat-icon">AI</div>
+                        <p class="stat-label">AI Productivity Score</p>
+                        <p id="dashboardAiScore" class="stat-value">0</p>
+                        <span class="stat-hint">Pace, streak, and focus blend</span>
+                    </article>
+                </div>
+
+                <div class="dashboard-grid">
+                    <article class="chat-container premium-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="eyebrow">AI coach</p>
+                                <h2>Ask for your next three actions</h2>
+                            </div>
+                            <span class="status-dot">Online</span>
                         </div>
 
-                        <div id="loading" class="loading-spinner">
-                            <div class="dot"></div>
-                            <div class="dot"></div>
-                            <div class="dot"></div>
+                        <div class="chat-display">
+                            <div class="message bot-message">
+                                Tell me what you want to improve today. I will turn it into a focused habit plan you can actually follow.
+                            </div>
+
+                            <div id="prompt-container" class="message user-message hidden">
+                                <p id="userPromptText"></p>
+                            </div>
+
+                            <div id="loading" class="loading-spinner" aria-live="polite">
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                            </div>
+
+                            <div id="response-container" class="message bot-message hidden">
+                                <p id="response"></p>
+                            </div>
                         </div>
 
-                        <div id="response-container" class="message bot-message hidden">
-                            <p id="response"></p>
-                        </div>
-                    </div>
+                        <form id="aiForm" class="input-area">
+                            <input type="text" id="prompt" placeholder="Ask for a focused plan, e.g. stop procrastinating" maxlength="300" required />
+                            <button class="send-btn" id="submitBtn" type="submit">Send</button>
+                        </form>
+                    </article>
 
-                    <form id="aiForm" class="input-area">
-                        <input type="text" id="prompt" placeholder="Ex: I want to stop procrastinating..." maxlength="300" required />
-                        <button class="send-btn" id="submitBtn" type="submit">
-                            <span>Send</span>
-                        </button>
-                    </form>
+                    <aside class="focus-panel premium-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="eyebrow">Focus queue</p>
+                                <h2>Today at a glance</h2>
+                            </div>
+                        </div>
+                        <div class="focus-list">
+                            <div>
+                                <span class="focus-dot green"></span>
+                                <p>Complete the smallest useful version of each habit.</p>
+                            </div>
+                            <div>
+                                <span class="focus-dot amber"></span>
+                                <p>Use Planning to assign time-of-day blocks.</p>
+                            </div>
+                            <div>
+                                <span class="focus-dot blue"></span>
+                                <p>Review Progress when you want the longer trend.</p>
+                            </div>
+                        </div>
+                        <div class="energy-match">
+                            <label for="energyMatchSelect">Current energy</label>
+                            <select id="energyMatchSelect">
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                                <option value="high">High</option>
+                            </select>
+                            <div id="energyRecommendationList" class="energy-recommendation-list"></div>
+                        </div>
+                    </aside>
                 </div>
                 <p id="error" class="error-text"></p>
 
-                <!-- Habits Section -->
-                <div class="habits-section">
+                <section class="daily-review-panel premium-panel">
+                    <div class="panel-head">
+                        <div>
+                            <p class="eyebrow">Daily review</p>
+                            <h2>Close the loop with AI</h2>
+                        </div>
+                        <span class="status-dot review-chip">Evening check-in</span>
+                    </div>
+
+                    <div class="review-grid">
+                        <form id="dailyReviewForm" class="daily-review-form">
+                            <label for="reviewWins">What went well?</label>
+                            <textarea id="reviewWins" maxlength="700" placeholder="Small wins, completed work, better choices..."></textarea>
+
+                            <label for="reviewBlockers">What got in the way?</label>
+                            <textarea id="reviewBlockers" maxlength="700" placeholder="Distractions, low energy, unclear plan..."></textarea>
+
+                            <div class="review-row">
+                                <div>
+                                    <label for="reviewEnergy">Energy level</label>
+                                    <select id="reviewEnergy">
+                                        <option value="medium">Medium</option>
+                                        <option value="low">Low</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="reviewPriority">Tomorrow's priority</label>
+                                    <input type="text" id="reviewPriority" maxlength="160" placeholder="One thing that matters most" />
+                                </div>
+                            </div>
+
+                            <button id="dailyReviewBtn" class="send-btn" type="submit">Generate Review</button>
+                            <p id="dailyReviewError" class="error-text"></p>
+                        </form>
+
+                        <article id="dailyReviewOutput" class="daily-review-output hidden">
+                            <div id="dailyReviewLoading" class="review-loading hidden">
+                                <div class="skeleton-line"></div>
+                                <div class="skeleton-line"></div>
+                                <div class="skeleton-line short"></div>
+                            </div>
+                            <div id="dailyReviewResult">
+                                <h3>Today's coaching brief</h3>
+                                <p id="reviewSummary"></p>
+                                <h4>Tomorrow recommendations</h4>
+                                <ul id="reviewRecommendations"></ul>
+                                <h4>Timing adjustments</h4>
+                                <ul id="reviewTimeChanges"></ul>
+                                <p id="reviewNote" class="review-note"></p>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="habits-section premium-panel">
                     <div class="habits-header">
-                        <h2>Daily Agenda</h2>
-                        <p class="subtitle">Use Delete here for permanent removal from your account. Planning delete only hides cards from Time Blocking.</p>
+                        <div>
+                            <p class="eyebrow">Daily agenda</p>
+                            <h2>Today's Habit Stack</h2>
+                            <p class="subtitle">Delete here permanently removes a habit. Planning delete only hides it from Time Blocking.</p>
+                        </div>
                         <form id="addHabitForm" class="add-habit-form">
-                            <input type="text" id="habitTitle" placeholder="Habit title (e.g. Drink 2L water)" maxlength="100" required />
+                            <input type="text" id="habitTitle" placeholder="Habit title" maxlength="100" required />
                             <input type="text" id="habitDesc" placeholder="Optional description" maxlength="500" />
+                            <select id="habitDifficulty" aria-label="Habit difficulty">
+                                <option value="medium">Medium</option>
+                                <option value="easy">Easy</option>
+                                <option value="hard">Hard</option>
+                            </select>
                             <button type="submit" id="addHabitBtn" class="send-btn">Add</button>
                         </form>
-                        <p id="habitError" class="error-text"></p>
                     </div>
-                    <div id="habitsList" class="habits-list">
-                        <!-- Habit Cards will be injected here via JS -->
-                    </div>
-                </div>
+                    <p id="habitError" class="error-text"></p>
+                    <div id="habitsList" class="habits-list"></div>
+                </section>
             </section>
 
-            <section id="progressView" class="hidden">
+            <section id="progressView" class="view-panel hidden">
                 <header class="content-header">
+                    <p class="eyebrow">Analytics</p>
                     <h1>Your Progress</h1>
                     <p class="subtitle">Daily consistency breakdown across time.</p>
                 </header>
 
                 <p id="progressStatus" class="progress-status hidden"></p>
+
+                <article id="dailyCountdownCard" class="daily-countdown-card countdown-green" aria-live="polite">
+                    <div class="countdown-copy">
+                        <p class="summary-label">Daily focus window</p>
+                        <h2>Time left to complete today's habits</h2>
+                        <p id="dailyCountdownMessage" class="countdown-message">Still enough time to finish strong</p>
+                    </div>
+                    <div class="countdown-visual" aria-hidden="true">
+                        <div class="countdown-ring">
+                            <svg viewBox="0 0 120 120">
+                                <circle class="countdown-ring-track" cx="60" cy="60" r="52"></circle>
+                                <circle id="dailyCountdownRing" class="countdown-ring-progress" cx="60" cy="60" r="52"></circle>
+                            </svg>
+                            <span id="dailyCountdownPercent">100%</span>
+                        </div>
+                    </div>
+                    <div class="countdown-time" aria-label="Time remaining today">
+                        <span><strong id="dailyCountdownHours">00</strong><small>Hours</small></span>
+                        <span><strong id="dailyCountdownMinutes">00</strong><small>Minutes</small></span>
+                        <span><strong id="dailyCountdownSeconds">00</strong><small>Seconds</small></span>
+                    </div>
+                    <div class="countdown-bar" aria-hidden="true">
+                        <span id="dailyCountdownBar"></span>
+                    </div>
+                </article>
 
                 <div class="summary-grid">
                     <article class="summary-card">
@@ -174,25 +412,56 @@
                 </div>
             </section>
 
-            <section id="planning-section" class="hidden">
-                <header class="content-header">
-                    <h1>Planning</h1>
-                    <p class="subtitle">Design your weekly structure and keep pace for the year.</p>
+            <section id="planning-section" class="view-panel hidden">
+                <header class="content-header planning-page-header">
+                    <div>
+                        <p class="eyebrow">Planner</p>
+                        <h1>Planning</h1>
+                        <p class="subtitle">Design your weekly structure and keep pace for the year.</p>
+                    </div>
+                    <div class="segmented-control planning-scope-toggle" id="planningScopeToggle" aria-label="Planning habit scope">
+                        <button type="button" class="active" data-planning-scope="my">My</button>
+                        <button type="button" data-planning-scope="duo">Duo</button>
+                    </div>
                 </header>
 
-                <article class="planning-card">
-                    <h3>Date Navigator</h3>
-                    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
-                        <input type="date" id="datePicker" />
-                        <button id="backToToday" class="planning-secondary-btn" type="button">Back to Today</button>
+                <article class="planning-card date-navigator-card">
+                    <div class="navigator-header">
+                        <h3>Date Navigator</h3>
+                        <div class="navigator-actions">
+                            <div class="custom-picker-wrapper">
+                                <button id="customDateBtn" class="planning-secondary-btn picker-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="customDatePopover">
+                                    <span class="picker-btn-icon" aria-hidden="true">Cal</span>
+                                    <span>Custom Date</span>
+                                </button>
+                                <input type="hidden" id="datePicker" />
+                            </div>
+                            <button id="backToToday" class="planning-secondary-btn" type="button">Today</button>
+                        </div>
                     </div>
-                    <p id="viewingDate" class="planning-meta" style="margin-top:10px;">Viewing: --</p>
-                    <p id="historyModeLabel" class="planning-meta hidden" style="color:#b45309;">Viewing History (Read-only)</p>
+                    
+                    <div class="week-selector-container">
+                        <button id="prevWeekBtn" class="nav-arrow-btn" type="button" title="Previous Week">←</button>
+                        <div id="weekDaysRow" class="week-days-row"></div>
+                        <button id="nextWeekBtn" class="nav-arrow-btn" type="button" title="Next Week">→</button>
+                    </div>
+                    
+                    <div class="navigator-meta-row">
+                        <p id="viewingDate" class="planning-meta">Viewing: --</p>
+                        <button id="freezeDayBtn" class="planning-secondary-btn hidden" type="button" style="padding: 4px 8px; font-size: 0.8rem; min-height: 28px;">❄️ Freeze Day</button>
+                        <p id="historyModeLabel" class="planning-meta hidden">Viewing History (Read-only)</p>
+                    </div>
                 </article>
 
                 <div class="planning-grid">
-                    <article class="planning-card">
-                        <h3>Weekly Architect</h3>
+                    <article class="planning-card weekly-architect-card">
+                        <div class="planning-card-title-row">
+                            <h3>Weekly Architect</h3>
+                            <span id="weeklyTodayPill" class="today-pill">Today</span>
+                        </div>
+                        <div id="weeklySummary" class="weekly-summary-grid"></div>
+                        <div id="weeklyFilterChips" class="planning-chip-row" aria-label="Weekly Architect filters"></div>
+                        <p id="weeklyBalanceSuggestion" class="planning-meta weekly-balance-suggestion hidden"></p>
                         <div id="weeklyArchitectGrid" class="weekly-grid"></div>
                     </article>
 
@@ -207,9 +476,20 @@
                     </article>
                 </div>
 
-                <article class="planning-card">
-                    <h3>Time Blocking</h3>
-                    <p class="planning-meta">Use ✔ to complete, ↺ to undo, and 🗑 to delete directly from each habit card.</p>
+                <article class="planning-card time-blocking-card">
+                    <div class="planning-card-title-row">
+                        <div>
+                            <h3>Time Blocking</h3>
+                            <p id="timeBlockingSubtitle" class="planning-meta">Showing habits for the selected day.</p>
+                        </div>
+                        <div class="time-blocking-toolbar" aria-label="Time Blocking options">
+                            <div class="segmented-control" id="timeBlockingScopeToggle">
+                                <button type="button" class="active" data-time-scope="today">Selected Day</button>
+                                <button type="button" data-time-scope="week">Full Week</button>
+                            </div>
+                            <button id="timeBlockingCompactToggle" class="planning-secondary-btn compact-toggle" type="button" aria-pressed="false">Compact</button>
+                        </div>
+                    </div>
                     <div id="timeBlockingView" class="time-blocking-grid"></div>
                 </article>
 
@@ -219,17 +499,30 @@
                             <h3 id="planningModalTitle">Edit Habit Plan</h3>
                             <button id="planningModalClose" class="planning-modal-close" type="button" aria-label="Close">X</button>
                         </div>
-                        <p id="planningHabitTitle" class="planning-meta"></p>
+                        <p id="planningHabitTitle" class="planning-meta" style="font-weight: 700; font-size: 1.1rem; margin-bottom: 12px;"></p>
+                        
+                        <label class="planning-label" for="planningTitleInput">Title</label>
+                        <input type="text" id="planningTitleInput" class="planning-select" style="margin-bottom: 12px;" maxlength="100" required />
+                        
+                        <label class="planning-label" for="planningDescInput">Description</label>
+                        <input type="text" id="planningDescInput" class="planning-select" style="margin-bottom: 12px;" maxlength="500" />
                         <label class="planning-label" for="planningTimeOfDaySelect">Time of Day</label>
-                        <select id="planningTimeOfDaySelect" class="planning-select">
+                        <select id="planningTimeOfDaySelect" class="planning-select" style="margin-bottom: 12px;">
                             <option value="Morning">Morning</option>
                             <option value="Afternoon">Afternoon</option>
                             <option value="Evening">Evening</option>
                         </select>
+                        <label class="planning-label" for="planningDifficultySelect">Difficulty</label>
+                        <select id="planningDifficultySelect" class="planning-select" style="margin-bottom: 12px;">
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
                         <p class="planning-label">Frequency</p>
-                        <div id="planningFrequencyChecks" class="planning-frequency-grid"></div>
+                        <div id="planningFrequencyChecks" class="planning-frequency-grid" style="margin-bottom: 12px;"></div>
                         <p id="planningModalError" class="error-text planning-modal-error"></p>
                         <div class="planning-modal-actions">
+                            <button id="planningModalDelete" class="planning-danger-btn" type="button">Delete Habit</button>
                             <button id="planningModalCancel" class="planning-secondary-btn" type="button">Cancel</button>
                             <button id="planningModalSave" class="send-btn" type="button">Save</button>
                         </div>
@@ -237,13 +530,381 @@
                 </div>
             </section>
 
-            <section id="settingsView" class="hidden">
+            <section id="settingsView" class="view-panel hidden">
                 <header class="content-header">
+                    <p class="eyebrow">Workspace</p>
                     <h1>Settings</h1>
-                    <p class="subtitle">Settings section is under construction.</p>
+                    <p class="subtitle">Control your profile, AI coaching style, notifications, habit defaults, dashboard behavior, and account data.</p>
                 </header>
+
+                <p id="settingsStatus" class="progress-status hidden"></p>
+
+                <div class="settings-grid">
+                    <form id="settingsForm" class="settings-stack">
+                        <article class="settings-card premium-panel">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Account</p>
+                                    <h2>Profile Settings</h2>
+                                </div>
+                            </div>
+                            <div class="settings-fields two-col">
+                                <label>Name
+                                    <input type="text" id="settingsName" maxlength="80" required />
+                                </label>
+                                <label>Email
+                                    <input type="email" id="settingsEmail" maxlength="180" required />
+                                </label>
+                                <label>Timezone
+                                    <input type="text" id="settingsTimezone" maxlength="80" placeholder="Europe/Tirane" />
+                                </label>
+                            </div>
+                        </article>
+
+                        <article class="settings-card premium-panel">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">AI coach</p>
+                                    <h2>AI Coach Preferences</h2>
+                                </div>
+                            </div>
+                            <div class="settings-fields two-col">
+                                <label>Coaching style
+                                    <select id="settingsCoachingStyle">
+                                        <option value="gentle">Gentle</option>
+                                        <option value="balanced">Balanced</option>
+                                        <option value="strict">Strict</option>
+                                    </select>
+                                </label>
+                                <label>Recommendation intensity
+                                    <select id="settingsRecommendationIntensity">
+                                        <option value="light">Light</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="aggressive">Aggressive</option>
+                                    </select>
+                                </label>
+                                <label>Daily AI check-in time
+                                    <input type="time" id="settingsDailyCheckInTime" />
+                                </label>
+                            </div>
+                            <div class="settings-check-grid">
+                                <label><input type="checkbox" id="focusProductivity" value="productivity" /> Productivity</label>
+                                <label><input type="checkbox" id="focusHealth" value="health" /> Health</label>
+                                <label><input type="checkbox" id="focusLearning" value="learning" /> Learning</label>
+                                <label><input type="checkbox" id="focusFitness" value="fitness" /> Fitness</label>
+                            </div>
+                        </article>
+
+                        <article class="settings-card premium-panel">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Emails and reminders</p>
+                                    <h2>Notification Settings</h2>
+                                </div>
+                            </div>
+                            <div class="settings-toggle-grid">
+                                <label><span>Morning briefing email</span><input type="checkbox" id="notifyMorningBriefing" /></label>
+                                <label><span>Evening review email</span><input type="checkbox" id="notifyEveningReview" /></label>
+                                <label><span>Missed habit reminders</span><input type="checkbox" id="notifyMissedHabitReminders" /></label>
+                                <label><span>Weekly progress report</span><input type="checkbox" id="notifyWeeklyProgressReport" /></label>
+                            </div>
+                            <div class="settings-action-row" style="margin-top: 1.2rem; padding-top: 1.2rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 200px;">
+                                    <p style="font-weight: 500; font-size: 0.95rem;">Desktop Push Notifications</p>
+                                    <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 2px;">Receive browser alerts when it's time to check off morning, afternoon, or evening habits.</p>
+                                </div>
+                                <button type="button" id="btnRequestNotificationPermission" class="planning-secondary-btn" style="margin: 0; min-height: 36px; padding: 6px 14px;">Enable Desktop Alerts</button>
+                            </div>
+                        </article>
+
+                        <article class="settings-card premium-panel">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">New habit defaults</p>
+                                    <h2>Habit Defaults</h2>
+                                </div>
+                            </div>
+                            <div class="settings-fields three-col">
+                                <label>Default difficulty
+                                    <select id="defaultDifficulty">
+                                        <option value="easy">Easy</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="hard">Hard</option>
+                                    </select>
+                                </label>
+                                <label>Default time of day
+                                    <select id="defaultTimeOfDay">
+                                        <option value="Morning">Morning</option>
+                                        <option value="Afternoon">Afternoon</option>
+                                        <option value="Evening">Evening</option>
+                                    </select>
+                                </label>
+                                <label>Default frequency
+                                    <select id="defaultFrequencyPreset">
+                                        <option value="everyday">Every day</option>
+                                        <option value="weekdays">Weekdays</option>
+                                        <option value="custom">Custom</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div id="defaultCustomFrequency" class="settings-check-grid">
+                                <label><input type="checkbox" value="0" /> Sun</label>
+                                <label><input type="checkbox" value="1" /> Mon</label>
+                                <label><input type="checkbox" value="2" /> Tue</label>
+                                <label><input type="checkbox" value="3" /> Wed</label>
+                                <label><input type="checkbox" value="4" /> Thu</label>
+                                <label><input type="checkbox" value="5" /> Fri</label>
+                                <label><input type="checkbox" value="6" /> Sat</label>
+                            </div>
+                        </article>
+
+                        <article class="settings-card premium-panel">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Experience</p>
+                                    <h2>Dashboard Preferences</h2>
+                                </div>
+                            </div>
+                            <div class="settings-fields two-col">
+                                <label>Start page
+                                    <select id="settingsStartPage">
+                                        <option value="dashboard">Dashboard</option>
+                                        <option value="planning">Planning</option>
+                                        <option value="progress">Progress</option>
+                                        <option value="social">Duos & Social</option>
+                                    </select>
+                                </label>
+                                <label>Color Theme
+                                    <select id="settingsTheme">
+                                        <option value="light">Original Light</option>
+                                        <option value="obsidian">Midnight Obsidian</option>
+                                        <option value="nord">Nord Icy Blue</option>
+                                        <option value="sepia">Warm Sepia</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="settings-toggle-grid">
+                                <label><span>Show AI Daily Review</span><input type="checkbox" id="showDailyReview" /></label>
+                                <label><span>Show Energy Match suggestions</span><input type="checkbox" id="showEnergyMatch" /></label>
+                                <label><span>Compact mode</span><input type="checkbox" id="compactMode" /></label>
+                            </div>
+                        </article>
+
+                        <div class="settings-save-row">
+                            <button id="settingsSaveBtn" class="send-btn" type="submit">Save Settings</button>
+                        </div>
+                    </form>
+
+                    <aside class="settings-stack">
+                        <article class="settings-card premium-panel">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Rewards Store</p>
+                                    <h2>Streak Freeze Store</h2>
+                                </div>
+                            </div>
+                            <p class="settings-copy">Spend 150 XP to buy a Streak Freeze. Use it to keep your streaks alive on missed days!</p>
+                            <div class="store-purchase-row" style="display: flex; align-items: center; justify-content: space-between; margin-top: 1rem;">
+                                <span class="cost-badge" style="background: rgba(0, 150, 255, 0.15); color: #00beff; padding: 6px 12px; border-radius: 6px; font-weight: bold; border: 1px dashed rgba(0,190,255,0.3);">❄️ 150 XP</span>
+                                <button id="buyStreakFreezeBtn" class="planning-secondary-btn" type="button" style="margin: 0; min-height: 36px; padding: 6px 16px;">Buy Freeze</button>
+                            </div>
+                        </article>
+
+                        <article class="settings-card premium-panel">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Achievements</p>
+                                    <h2>Unlocked Badges</h2>
+                                </div>
+                            </div>
+                            <div class="badges-grid" id="badgesDisplayGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 12px; margin-top: 1rem;">
+                                <!-- Dynamic badges are loaded here -->
+                            </div>
+                        </article>
+
+                        <article class="settings-card premium-panel">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Integrations</p>
+                                    <h2>Calendar Integration</h2>
+                                </div>
+                            </div>
+                            <p class="settings-copy">Sync your scheduled habits directly into Apple Calendar, Google Calendar, or Outlook as blocked time.</p>
+                            <div style="margin-top: 1rem;">
+                                <button id="btnExportAllCalendar" class="planning-secondary-btn" type="button" style="margin: 0; width: 100%; min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px;">📅 Export All Habits to Calendar (.ics)</button>
+                            </div>
+                        </article>
+
+                        <article class="settings-card premium-panel">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Security</p>
+                                    <h2>Password Change</h2>
+                                </div>
+                            </div>
+                            <form id="passwordForm" class="settings-fields">
+                                <label>Current password
+                                    <input type="password" id="currentPassword" autocomplete="current-password" />
+                                </label>
+                                <label>New password
+                                    <input type="password" id="newPassword" minlength="6" autocomplete="new-password" />
+                                </label>
+                                <button id="passwordSaveBtn" class="planning-secondary-btn" type="submit">Update Password</button>
+                            </form>
+                        </article>
+
+                        <article class="settings-card premium-panel danger-zone">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Data controls</p>
+                                    <h2>Data & Privacy</h2>
+                                </div>
+                            </div>
+                            <p class="settings-copy">HabitCoachAI uses your habit data, check-ins, and preferences to generate coaching responses and recommendations. Keep personal or sensitive details out of prompts if you do not want them used for AI coaching.</p>
+                            <div class="settings-action-list">
+                                <button id="exportDataBtn" class="planning-secondary-btn" type="button">Export Habit Data</button>
+                                <button id="deleteAllHabitsBtn" class="planning-danger-btn" type="button">Delete All Habits</button>
+                            </div>
+                            <div class="delete-account-box">
+                                <label>Confirm password to delete account
+                                    <input type="password" id="deleteAccountPassword" autocomplete="current-password" />
+                                </label>
+                                <button id="deleteAccountBtn" class="planning-danger-btn" type="button">Delete Account</button>
+                            </div>
+                        </article>
+                    </aside>
+                </div>
+            </section>
+
+            <section id="socialView" class="view-panel hidden social-page">
+                <header class="planning-header social-hero">
+                    <div>
+                        <p class="eyebrow" id="socialViewEyebrow">Social Accountability</p>
+                        <h1 id="socialViewTitle">Duos & Global Pulse</h1>
+                        <p class="subtitle">Build shared habits with one partner and watch anonymized community momentum update in one dashboard.</p>
+                    </div>
+                </header>
+
+                <p id="socialStatus" class="progress-status hidden"></p>
+                <div id="socialToast" class="social-toast hidden" role="status" aria-live="polite"></div>
+
+                <div class="settings-grid social-layout">
+                    <div class="settings-stack social-stack">
+                        <article class="settings-card premium-panel social-card social-card-invite">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Collaboration</p>
+                                    <h2>Invite a Duo Partner</h2>
+                                </div>
+                            </div>
+                            <p class="settings-copy">Select one of your habits and invite a friend by email to build the habit together. You will see side-by-side progress meters!</p>
+                            <form id="socialInviteForm" class="settings-fields social-form" novalidate>
+                                <label class="social-field">Select Habit
+                                    <select id="socialHabitSelect" class="native-hidden-select" tabindex="-1" aria-hidden="true" required>
+                                        <option value="">-- Choose Habit --</option>
+                                    </select>
+                                    <div class="social-select" data-social-select>
+                                        <button id="socialHabitDropdownBtn" class="social-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                                            <span id="socialHabitDropdownText">Choose habit</span>
+                                            <span class="social-select-chevron" aria-hidden="true">⌄</span>
+                                        </button>
+                                        <div id="socialHabitDropdownList" class="social-select-list hidden" role="listbox" aria-label="Available habits"></div>
+                                    </div>
+                                </label>
+                                <label class="social-field">Friend's Registered Email
+                                    <input type="email" id="socialFriendEmail" placeholder="friend@example.com" autocomplete="email" required />
+                                    <span id="socialEmailError" class="social-field-error hidden">Please enter a valid email address.</span>
+                                </label>
+                                <div class="social-actions">
+                                    <button id="socialInviteSubmitBtn" class="send-btn social-primary-btn" type="submit" disabled>Send Invitation</button>
+                                </div>
+                            </form>
+                            <p id="socialInviteStatus" class="settings-copy hidden"></p>
+                        </article>
+
+                        <article class="settings-card premium-panel social-card">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Active Partners</p>
+                                    <h2>Duo Shared Habits</h2>
+                                </div>
+                            </div>
+                            <div id="activeDuosList" class="settings-fields social-list">
+                                <!-- Active shared habits rendered here -->
+                            </div>
+                        </article>
+                    </div>
+
+                    <aside class="settings-stack social-stack">
+                        <article class="settings-card premium-panel social-card">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Inbox</p>
+                                    <h2>Pending Invitations</h2>
+                                </div>
+                            </div>
+                            <div id="pendingInvitesList" class="social-list compact">
+                                <!-- Received invitations render here -->
+                            </div>
+                        </article>
+
+                        <article class="settings-card premium-panel social-card social-card-pulse">
+                            <div class="settings-card-head">
+                                <div>
+                                    <p class="eyebrow">Community</p>
+                                    <h2>Global Habit Pulse</h2>
+                                </div>
+                            </div>
+                            <p class="settings-copy">Real-time aggregated anonymous activity of the HabitCoach community.</p>
+                            <div class="global-pulse-grid">
+                                <div class="community-stat-row">
+                                    <span>Overall Completion Today</span>
+                                    <strong id="globalPulseRate">--</strong>
+                                    <small id="globalPulseTrend">Yesterday: --</small>
+                                </div>
+                                <div class="community-stat-row pulse-blue">
+                                    <span>Fitness Goals Completed Today</span>
+                                    <strong id="globalPulseFitness">--</strong>
+                                    <small id="globalPulseCompleted">Completed: --</small>
+                                </div>
+                                <div class="community-stat-row pulse-green">
+                                    <span>Streaks Saved by Freezes Today</span>
+                                    <strong id="globalPulseFreezes">--</strong>
+                                    <small>Anonymous community total</small>
+                                </div>
+                            </div>
+                        </article>
+                    </aside>
+                </div>
             </section>
         </main>
+    </div>
+
+    <div id="customDateBackdrop" class="date-popover-backdrop hidden"></div>
+    <div id="customDatePopover" class="date-popover hidden" role="dialog" aria-modal="false" aria-labelledby="datePopoverTitle">
+        <div class="date-popover-head">
+            <button id="datePrevMonth" class="date-month-btn" type="button" aria-label="Previous month">&lsaquo;</button>
+            <div>
+                <p class="date-popover-kicker">Choose date</p>
+                <h4 id="datePopoverTitle">Month Year</h4>
+            </div>
+            <button id="dateNextMonth" class="date-month-btn" type="button" aria-label="Next month">&rsaquo;</button>
+        </div>
+        <div class="date-quick-actions" aria-label="Date shortcuts">
+            <button type="button" data-date-quick="today">Today</button>
+            <button type="button" data-date-quick="tomorrow">Tomorrow</button>
+            <button type="button" data-date-quick="week">This Week</button>
+        </div>
+        <div class="date-weekdays" aria-hidden="true">
+            <span>Mo</span>
+            <span>Tu</span>
+            <span>We</span>
+            <span>Th</span>
+            <span>Fr</span>
+            <span>Sa</span>
+            <span>Su</span>
+        </div>
+        <div id="customDateGrid" class="date-grid" role="grid" aria-label="Custom date calendar"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -251,3 +912,5 @@
 </body>
 
 </html>
+
+

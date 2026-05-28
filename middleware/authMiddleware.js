@@ -9,24 +9,23 @@ const protect = async (req, res, next) => {
     req.headers.authorization.startsWith("Bearer")
   ) {
     try {
-      // Marrja e token-it nga "Bearer <token>"
       token = req.headers.authorization.split(" ")[1];
-
-      // Verifikimi i token-it
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Kërkimi i përdoruesit në DB (pa marrë passwordin) dhe ngjitja te request
       req.user = await User.findById(decoded.id).select("-password");
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authorized, user not found." });
+      }
 
-      next();
+      return next();
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ error: "Not authorized, token failed" });
+      console.error("Auth Middleware Error:", error.message);
+      return res.status(401).json({ error: "Not authorized, token failed." });
     }
   }
 
   if (!token) {
-    res.status(401).json({ error: "Not authorized, no token" });
+    return res.status(401).json({ error: "Not authorized, no token." });
   }
 };
 

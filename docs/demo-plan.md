@@ -1,4 +1,10 @@
-# Demo Plan (5-7 min) - HabitCoachAI
+PS C:\semetri_VI\web app> npm run dev
+
+> dev
+> node --watch habitCooach.js
+
+MongoDB connection error: querySrv ECONNREFUSED _mongodb._tcp.cluster0.9dot3pp.mongodb.net
+Failed running 'habitCooach.js'. Waiting for file changes before restarting...# Demo Plan (5-7 min) - HabitCoachAI
 
 ## 1) Cka eshte projekti dhe kujt i sherben (45-60 sek)
 HabitCoachAI eshte nje aplikacion MERN per menaxhim zakonesh ditore, me fokus te vecante ne:
@@ -22,7 +28,11 @@ I sherben studenteve dhe personave qe duan te krijojne rutine me disipline, duke
    - shpjegoj se ditet tjera shihen me scroll.
 5. Progress:
    - hap chart-et dhe trendin javor/mujor.
-6. AI Chat:
+6. Duos & Global Pulse:
+   - tregoj invite per nje Duo Partner me email.
+   - shpjegoj Pending Invitations dhe Duo Shared Habits me progres side-by-side.
+   - tregoj Global Habit Pulse me completion today, fitness goals, dhe streak freezes.
+7. AI Chat:
    - dergoj nje prompt te shkurter dhe tregoj pergjigjen.
 
 ## 3) Cilat pjese teknike do t'i shpjegoj shkurt (60-90 sek)
@@ -36,6 +46,9 @@ I sherben studenteve dhe personave qe duan te krijojne rutine me disipline, duke
 - Habit history:
   - status per date ne format `YYYY-MM-DD`
   - UI read-only per data historike (jo update ne dite te kaluara)
+- Duos & Global Pulse:
+  - endpoint-e te mbrojtura `/api/social/shared-habits`, `/invite`, `/accept`, `/decline`
+  - agregim anonim komunitar nga history/frequency, i llogaritur sipas timezone te user-it
 - Ndarja e sjelljes se delete:
   - Daily Agenda = permanent delete ne DB (`DELETE /api/habits/:id`)
   - Planning Time Blocking = UI-only hide (pa prekur DB)
@@ -47,6 +60,8 @@ I sherben studenteve dhe personave qe duan te krijojne rutine me disipline, duke
 - [ ] CRUD i habit-eve funksionon
 - [ ] Time Blocking update (`PUT /api/habits/:id`) funksionon
 - [ ] Progress endpoint-et ngarkojne te dhenat
+- [ ] Social dashboard ngarkon Duos, Pending Invitations dhe Global Pulse
+- [ ] Invite/Accept/Decline per Duo funksionon me dy user-a demo
 - [ ] AI Chat pergjigjet brenda timeout-it
 - [ ] Live URL hapet ne browser pa gabime kritike
 - [ ] Kontrolluar nje user demo me data te gatshme
@@ -63,4 +78,3 @@ Vlera e HabitCoachAI eshte kombinimi i:
 - planifikimit praktik te zakoneve
 - monitorimit te qarte te progresit
 - asistences AI ne nje workflow te vetem dhe te thjeshte per perdoruesin.
-
