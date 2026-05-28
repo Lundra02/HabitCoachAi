@@ -7,6 +7,21 @@ const BRAND = {
   white: "#ffffff"
 };
 
+const escapeHtml = (value = "") => String(value)
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&#39;");
+
+const safeAppUrl = (dashboardUrl = "") => {
+  const url = new URL(dashboardUrl);
+  if (process.env.NODE_ENV === "production" && url.protocol !== "https:") {
+    throw new Error("Email links must use HTTPS in production.");
+  }
+  return url.toString().replace(/\/$/, "");
+};
+
 const generateLayout = ({ preheader, title, intro, body, footer }) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -45,6 +60,7 @@ const generateLayout = ({ preheader, title, intro, body, footer }) => `
 `;
 
 export const generateMorningEmail = ({ habits, dashboardUrl }) => {
+  const safeDashboardUrl = safeAppUrl(dashboardUrl);
   const listMarkup = habits.length
     ? habits
         .map(
@@ -63,7 +79,7 @@ export const generateMorningEmail = ({ habits, dashboardUrl }) => {
     <ul style="margin:0 0 18px 18px;padding:0;">
       ${listMarkup}
     </ul>
-    <a href="${dashboardUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
+    <a href="${safeDashboardUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
       Go to Dashboard
     </a>
   `;
@@ -114,6 +130,7 @@ export const generateEveningEmail = ({ completed, missed, successRate }) => {
 };
 
 export const generateMissedHabitReminderEmail = ({ pendingHabits, dashboardUrl }) => {
+  const safeDashboardUrl = safeAppUrl(dashboardUrl);
   const listMarkup = pendingHabits.length
     ? pendingHabits
         .map(
@@ -132,7 +149,7 @@ export const generateMissedHabitReminderEmail = ({ pendingHabits, dashboardUrl }
     <ul style="margin:0 0 18px 18px;padding:0;">
       ${listMarkup}
     </ul>
-    <a href="${dashboardUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
+    <a href="${safeDashboardUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
       Finish Today's Habits
     </a>
   `;
@@ -147,6 +164,7 @@ export const generateMissedHabitReminderEmail = ({ pendingHabits, dashboardUrl }
 };
 
 export const generateWeeklyProgressEmail = ({ completed, missed, completionRate, bestDay, dashboardUrl }) => {
+  const safeDashboardUrl = safeAppUrl(dashboardUrl);
   const progressWidth = Math.max(0, Math.min(100, completionRate));
   const body = `
     <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;font-weight:600;">Last 7 days</p>
@@ -175,7 +193,7 @@ export const generateWeeklyProgressEmail = ({ completed, missed, completionRate,
         </td>
       </tr>
     </table>
-    <a href="${dashboardUrl}" style="display:inline-block;margin-top:10px;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
+    <a href="${safeDashboardUrl}" style="display:inline-block;margin-top:10px;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
       Review Progress
     </a>
   `;
@@ -190,9 +208,9 @@ export const generateWeeklyProgressEmail = ({ completed, missed, completionRate,
 };
 
 export const generateVerificationEmail = ({ name, code, expiresMinutes = 10, dashboardUrl }) => {
-  const verifyUrl = `${dashboardUrl.replace(/\/$/, "")}/verify.html`;
+  const verifyUrl = `${safeAppUrl(dashboardUrl)}/verify.html`;
   const body = `
-    <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;">Hi ${name || "there"},</p>
+    <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;">Hi ${escapeHtml(name || "there")},</p>
     <p style="margin:0 0 14px 0;color:${BRAND.grey};font-size:14px;">
       Use this verification code to confirm your email address. It expires in ${expiresMinutes} minutes.
     </p>
@@ -213,9 +231,9 @@ export const generateVerificationEmail = ({ name, code, expiresMinutes = 10, das
 };
 
 export const generateResetEmail = ({ name, token, dashboardUrl }) => {
-  const resetUrl = `${dashboardUrl.replace(/\/$/, "")}/reset-password?token=${token}`;
+  const resetUrl = `${safeAppUrl(dashboardUrl)}/reset-password.html#token=${encodeURIComponent(token)}`;
   const body = `
-    <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;">Hi ${name || "there"},</p>
+    <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;">Hi ${escapeHtml(name || "there")},</p>
     <p style="margin:0 0 14px 0;color:${BRAND.grey};font-size:14px;">We received a request to reset your HabitCoach password. Click the button below to set a new password. The link will expire in 1 hour.</p>
     <a href="${resetUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">Reset my password</a>
   `;
@@ -230,13 +248,14 @@ export const generateResetEmail = ({ name, token, dashboardUrl }) => {
 };
 
 export const generateDuoInviteEmail = ({ inviterName, habitTitle, dashboardUrl }) => {
+  const safeDashboardUrl = safeAppUrl(dashboardUrl);
   const body = `
     <p style="margin:0 0 14px 0;color:${BRAND.dark};font-size:16px;">Hi there,</p>
     <p style="margin:0 0 14px 0;color:${BRAND.grey};font-size:14px;">
-      <strong>${inviterName || "A HabitCoachAI user"}</strong> invited you to build the habit
-      <strong>${habitTitle || "Untitled Habit"}</strong> together.
+      <strong>${escapeHtml(inviterName || "A HabitCoachAI user")}</strong> invited you to build the habit
+      <strong>${escapeHtml(habitTitle || "Untitled Habit")}</strong> together.
     </p>
-    <a href="${dashboardUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
+    <a href="${safeDashboardUrl}" style="display:inline-block;background:${BRAND.green};color:${BRAND.white};text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">
       Open Pending Invitations
     </a>
   `;

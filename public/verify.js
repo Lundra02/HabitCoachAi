@@ -1,8 +1,8 @@
-const params = new URLSearchParams(window.location.search);
-const email = params.get("email") || sessionStorage.getItem("pendingVerificationEmail") || "";
+const storedEmail = sessionStorage.getItem("pendingVerificationEmail") || "";
 const storedExpiry = sessionStorage.getItem("pendingVerificationExpires");
 const inputs = Array.from(document.querySelectorAll(".code-input"));
 const form = document.getElementById("verifyForm");
+const emailInput = document.getElementById("verifyEmailInput");
 const emailLabel = document.getElementById("verifyEmailLabel");
 const messageEl = document.getElementById("verifyMessage");
 const submitBtn = document.getElementById("verifySubmitBtn");
@@ -15,7 +15,7 @@ if (Number.isNaN(expiresAt)) {
 }
 let toastTimer = null;
 
-if (!email && localStorage.getItem("token")) {
+if (!storedEmail && localStorage.getItem("token")) {
     window.location.href = "index.html";
 }
 
@@ -57,15 +57,13 @@ const syncCountdown = () => {
     countdownEl.classList.toggle("expired", remainingMs <= 0);
 };
 
-if (!email) {
-    setMessage("Missing email. Please sign up or log in again.", true);
-    form.querySelectorAll("input, button").forEach((el) => {
-        el.disabled = true;
-    });
-} else {
-    emailLabel.textContent = email;
-    sessionStorage.setItem("pendingVerificationEmail", email);
+if (storedEmail) {
+    emailInput.value = storedEmail;
+    emailLabel.textContent = storedEmail;
     inputs[0]?.focus();
+} else {
+    emailLabel.textContent = "your email";
+    emailInput.focus();
 }
 
 inputs.forEach((input, index) => {
@@ -92,9 +90,22 @@ inputs.forEach((input, index) => {
     });
 });
 
+emailInput.addEventListener("input", () => {
+    const nextEmail = emailInput.value.trim().toLowerCase();
+    emailLabel.textContent = nextEmail || "your email";
+});
+
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const email = emailInput.value.trim().toLowerCase();
     const code = getCode();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setMessage("Enter the email address you used to sign up.", true);
+        showToast("Enter a valid email address.", "error");
+        emailInput.focus();
+        return;
+    }
 
     if (!/^\d{6}$/.test(code)) {
         setMessage("Enter all 6 digits from your email.", true);
@@ -106,6 +117,7 @@ form.addEventListener("submit", async (event) => {
     setMessage("");
 
     try {
+        sessionStorage.setItem("pendingVerificationEmail", email);
         const res = await fetch("/api/verify-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -133,6 +145,7 @@ form.addEventListener("submit", async (event) => {
 });
 
 resendBtn.addEventListener("click", async () => {
+    const email = emailInput.value.trim().toLowerCase();
     if (!email) return;
 
     resendBtn.disabled = true;
@@ -141,6 +154,7 @@ resendBtn.addEventListener("click", async () => {
     setMessage("");
 
     try {
+        sessionStorage.setItem("pendingVerificationEmail", email);
         const res = await fetch("/api/resend-verification", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

@@ -1,5 +1,6 @@
-const params = new URLSearchParams(window.location.search);
-const token = params.get("token");
+const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+const queryParams = new URLSearchParams(window.location.search);
+const token = hashParams.get("token") || queryParams.get("token");
 const form = document.getElementById("resetPasswordForm");
 const submit = document.getElementById("submit");
 const passwordEl = document.getElementById("password");
@@ -38,6 +39,9 @@ if (!token) {
   submit.disabled = true;
   passwordEl.disabled = true;
 } else {
+  if (window.location.search) {
+    window.history.replaceState(null, "", `${window.location.pathname}#token=${encodeURIComponent(token)}`);
+  }
   passwordEl.focus();
 }
 

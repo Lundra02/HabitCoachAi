@@ -3,7 +3,7 @@
   "scripts": {
     "start": "node habitCoach.js",
     "dev": "node --watch habitCoach.js",
-    "build": "node --check habitCoach.js && node --check public/script.js && node --check public/verify.js && node --check public/reset-password.js && node --check public/sw.js && node --check routes/auth.js && node --check routes/habits.js && node --check routes/progress.js && node --check routes/reviews.js && node --check routes/settings.js && node --check routes/social.js && node --check models/User.js && node --check models/Habit.js && node --check models/DailyReview.js && node --check utils/emailHelper.js && node --check utils/emailTemplates.js && node scripts/build-check.js",
+    "build": "node --check habitCoach.js && node --check public/script.js && node --check public/verify.js && node --check public/reset-password.js && node --check public/sw.js && node --check routes/auth.js && node --check routes/habits.js && node --check routes/progress.js && node --check routes/reviews.js && node --check routes/settings.js && node --check routes/social.js && node --check middleware/security.js && node --check middleware/errorHandler.js && node --check models/User.js && node --check models/Habit.js && node --check models/DailyReview.js && node --check utils/emailHelper.js && node --check utils/emailTemplates.js && node scripts/build-check.js",
     "email:test": "node scripts/email-test.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

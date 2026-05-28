@@ -8,6 +8,8 @@ import { generateVerificationEmail, generateResetEmail } from "../utils/emailTem
 
 const router = express.Router();
 const VERIFICATION_CODE_MINUTES = 10;
+const RESET_TOKEN_BYTES = 32;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const resendVerificationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -25,11 +27,30 @@ const generateToken = (userOrId) => {
     : { id: userOrId };
 
   return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: "30d",
+    expiresIn: "7d",
   });
 };
 
 const normalizeEmail = (email = "") => String(email).trim().toLowerCase();
+const isValidEmail = (email) => EMAIL_PATTERN.test(email);
+const isValidPassword = (password) => typeof password === "string" && password.length >= 6 && password.length <= 128;
+
+const getPublicAppUrl = () => {
+  const fallback = process.env.NODE_ENV === "production"
+    ? ""
+    : `http://localhost:${process.env.PORT || 3000}`;
+  const rawUrl = (process.env.FRONTEND_URL || fallback).split(",")[0].trim().replace(/\/$/, "");
+
+  try {
+    const url = new URL(rawUrl);
+    if (process.env.NODE_ENV === "production" && url.protocol !== "https:") {
+      throw new Error("Production FRONTEND_URL must use HTTPS.");
+    }
+    return url.toString().replace(/\/$/, "");
+  } catch (error) {
+    throw new Error("Invalid FRONTEND_URL configuration.");
+  }
+};
 
 const generateSixDigitCode = () => crypto.randomInt(100000, 1000000).toString();
 
@@ -54,7 +75,7 @@ const storeVerificationCode = async (user) => {
 
 const sendVerificationCode = async (user) => {
   const code = await storeVerificationCode(user);
-  const dashboardUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+  const dashboardUrl = getPublicAppUrl();
   const html = generateVerificationEmail({
     name: user.name,
     code,
@@ -88,8 +109,12 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Name, email, and password are required." });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    if (!isValidEmail(normalizedEmail)) {
+      return res.status(400).json({ error: "Please enter a valid email address." });
+    }
+
+    if (!isValidPassword(password)) {
+      return res.status(400).json({ error: "Password must be 6-128 characters." });
     }
 
     const userExists = await User.findOne({ email: normalizedEmail });
@@ -138,7 +163,7 @@ router.post("/verify-email", async (req, res) => {
   const email = normalizeEmail(req.body.email);
   const code = String(req.body.code || "").trim();
 
-  if (!email || !/^\d{6}$/.test(code)) {
+  if (!isValidEmail(email) || !/^\d{6}$/.test(code)) {
     return res.status(400).json({ error: "Enter the 6-digit verification code." });
   }
 
@@ -185,7 +210,7 @@ router.post("/verify-email", async (req, res) => {
 
 router.post("/resend-verification", resendVerificationLimiter, async (req, res) => {
   const email = normalizeEmail(req.body.email);
-  if (!email) return res.status(400).json({ error: "Email is required." });
+  if (!isValidEmail(email)) return res.status(400).json({ error: "Please enter a valid email address." });
 
   try {
     const user = await User.findOne({ email });
@@ -220,12 +245,14 @@ router.post("/resend-verification", resendVerificationLimiter, async (req, res) 
 // GET /api/verify?token=<token>
 router.get("/verify", async (req, res) => {
   const { token } = req.query;
-  if (!token) return res.status(400).json({ error: "Token is required" });
+  if (!token || typeof token !== "string" || token.length > 200) {
+    return res.status(400).sendFile("error.html", { root: "public" });
+  }
 
   try {
     const hashed = crypto.createHash("sha256").update(String(token)).digest("hex");
     const user = await User.findOne({ verificationToken: hashed, verificationExpires: { $gt: Date.now() } });
-    if (!user) return res.status(400).json({ error: "Invalid or expired token" });
+    if (!user) return res.status(400).sendFile("error.html", { root: "public" });
 
     user.isVerified = true;
     user.verificationToken = undefined;
@@ -234,29 +261,29 @@ router.get("/verify", async (req, res) => {
     user.verificationCodeExpires = undefined;
     await user.save();
 
-    res.json({ message: "Account verified" });
+    res.redirect(303, "/login.html");
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).sendFile("error.html", { root: "public" });
   }
 });
 
 // Forgot password - request reset
 router.post("/forgot", async (req, res) => {
   const email = normalizeEmail(req.body.email);
-  if (!email) return res.status(400).json({ error: "Email is required" });
+  if (!isValidEmail(email)) return res.status(400).json({ error: "Please enter a valid email address." });
 
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(200).json({ message: "If that email exists, a reset link was sent" });
 
-    const resetRaw = crypto.randomBytes(32).toString("hex");
+    const resetRaw = crypto.randomBytes(RESET_TOKEN_BYTES).toString("hex");
     const resetHash = crypto.createHash("sha256").update(resetRaw).digest("hex");
     user.resetToken = resetHash;
     user.resetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
     await user.save();
 
-    const dashboardUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+    const dashboardUrl = getPublicAppUrl();
     const html = generateResetEmail({ name: user.name, token: resetRaw, dashboardUrl });
     const emailResult = await sendEmail(user.email, "Reset your HabitCoach password", html);
     if (!emailResult.ok) {
@@ -274,6 +301,14 @@ router.post("/forgot", async (req, res) => {
 router.post("/reset", async (req, res) => {
   const { token, password } = req.body;
   if (!token || !password) return res.status(400).json({ error: "Token and new password are required" });
+
+  if (typeof token !== "string" || token.length > RESET_TOKEN_BYTES * 2) {
+    return res.status(400).json({ error: "Invalid or expired token" });
+  }
+
+  if (!isValidPassword(password)) {
+    return res.status(400).json({ error: "Password must be 6-128 characters." });
+  }
 
   try {
     const hashed = crypto.createHash("sha256").update(String(token)).digest("hex");
@@ -298,6 +333,10 @@ router.post("/reset", async (req, res) => {
 router.post("/login", async (req, res) => {
   const email = normalizeEmail(req.body.email);
   const { password } = req.body;
+
+  if (!isValidEmail(email) || typeof password !== "string") {
+    return res.status(401).json({ error: "Invalid email or password" });
+  }
 
   try {
     const user = await User.findOne({ email });

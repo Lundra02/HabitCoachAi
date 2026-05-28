@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (data.verificationCodeExpires) {
                         sessionStorage.setItem("pendingVerificationExpires", data.verificationCodeExpires);
                     }
-                    window.location.href = `verify.html?email=${encodeURIComponent(data.email || email)}`;
+                    window.location.href = "verify.html";
                     return;
                 }
                 if (!res.ok) throw new Error(data.error || "Login failed");
@@ -181,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.verificationCodeExpires) {
                     sessionStorage.setItem("pendingVerificationExpires", data.verificationCodeExpires);
                 }
-                window.location.href = `verify.html?email=${encodeURIComponent(data.email || email)}`;
+                window.location.href = "verify.html";
             } catch (err) {
                 errorText.textContent = `Warning: ${err.message}`;
             } finally {
@@ -314,6 +314,10 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#39;");
+    const safeToken = (value = "", fallback = "item") => {
+        const clean = String(value || "").replace(/[^a-zA-Z0-9_-]/g, "");
+        return clean || fallback;
+    };
 
     const stripRawIdNoise = (value = "") => String(value).replace(/\b\d{7,}\b/g, " ").replace(/\s+/g, " ").trim();
     const formatHabitTitle = (title = "") => stripRawIdNoise(title) || "Untitled Habit";
@@ -3374,7 +3378,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const completion = Math.max(0, Math.min(100, Number(isFriend ? item.friendWeeklyCompletion : item.myWeeklyCompletion) || 0));
             const streak = Number(isFriend ? item.friendStreak : item.myStreak) || 0;
             const ownerLabel = isFriend ? (item.friendName || "Partner") : "You";
-            const statusClass = summary.todayStatus || "pending";
+            const statusClass = safeToken(summary.todayStatus || "pending", "pending");
 
             return `
                 <div class="duo-task-detail">
@@ -3452,17 +3456,19 @@ document.addEventListener("DOMContentLoaded", () => {
                     const myWeeklyCompletion = Math.max(0, Math.min(100, Number(item.myWeeklyCompletion) || 0));
                     const friendWeeklyCompletion = Math.max(0, Math.min(100, Number(item.friendWeeklyCompletion) || 0));
                     card.className = "pending-invite-card duo-shared-card";
-                    card.dataset.duoId = item._id;
+                    const safeItemId = safeToken(item._id);
+                    const safeDifficulty = safeToken(item.difficulty || "medium", "medium");
+                    card.dataset.duoId = safeItemId;
                     card.innerHTML = `
                         <div class="duo-card-header">
                             <div>
                                 <h3 class="duo-card-title">${escapeHtml(item.title)}</h3>
                                 <span class="duo-card-meta">Partner: <strong>${escapeHtml(item.friendName)}</strong></span>
                             </div>
-                            <span class="difficulty-tag duo-difficulty ${item.difficulty || "medium"}">${item.difficulty || "medium"}</span>
+                            <span class="difficulty-tag duo-difficulty ${safeDifficulty}">${escapeHtml(item.difficulty || "medium")}</span>
                         </div>
                         <div class="duo-stat-grid" role="tablist" aria-label="Duo task owner">
-                            <button type="button" class="duo-user-col active" data-duo-person="me" data-duo-id="${item._id}">
+                            <button type="button" class="duo-user-col active" data-duo-person="me" data-duo-id="${safeItemId}">
                                 <span class="duo-user-label">YOU</span>
                                 <strong class="duo-streak mine">${item.myStreak}d</strong>
                                 <div class="duo-progress-bar">
@@ -3470,7 +3476,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                                 <span class="duo-completion-label">${myWeeklyCompletion}% completion</span>
                             </button>
-                            <button type="button" class="duo-user-col friend" data-duo-person="friend" data-duo-id="${item._id}">
+                            <button type="button" class="duo-user-col friend" data-duo-person="friend" data-duo-id="${safeItemId}">
                                 <span class="duo-user-label friend-label">${escapeHtml(item.friendName)}</span>
                                 <strong class="duo-streak friend-streak">${item.friendStreak}d</strong>
                                 <div class="duo-progress-bar">
@@ -3479,7 +3485,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span class="duo-completion-label">${friendWeeklyCompletion}% completion</span>
                             </button>
                         </div>
-                        <div class="duo-task-detail-wrap" data-duo-detail="${item._id}">
+                        <div class="duo-task-detail-wrap" data-duo-detail="${safeItemId}">
                             ${renderDuoPersonDetail(item, "me")}
                         </div>
                     `;
@@ -3487,7 +3493,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 activeDuosList.querySelectorAll("[data-duo-person]").forEach((btn) => {
                     btn.addEventListener("click", () => {
-                        const selectedItem = activeShared.find((item) => item._id === btn.dataset.duoId);
+                        const selectedItem = activeShared.find((item) => safeToken(item._id) === btn.dataset.duoId);
                         if (!selectedItem) return;
                         const card = btn.closest(".duo-shared-card");
                         const detailWrap = card?.querySelector(`[data-duo-detail="${btn.dataset.duoId}"]`);
@@ -3517,8 +3523,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <p class="invite-meta">From: <strong>${escapeHtml(item.friendName)}</strong> (${escapeHtml(item.friendEmail)})</p>
                             </div>
                             <div class="invite-actions">
-                                <button class="planning-danger-btn invite-btn invite-btn-danger deny-invite-btn" data-id="${item._id}">Deny</button>
-                                <button class="send-btn invite-btn accept-invite-btn" data-id="${item._id}">Accept</button>
+                                <button class="planning-danger-btn invite-btn invite-btn-danger deny-invite-btn" data-id="${safeToken(item._id)}">Deny</button>
+                                <button class="send-btn invite-btn accept-invite-btn" data-id="${safeToken(item._id)}">Accept</button>
                             </div>
                         `;
                     } else {
@@ -3529,7 +3535,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <p class="invite-meta">To: <strong>${escapeHtml(item.friendEmail)}</strong></p>
                             </div>
                             <div class="invite-actions">
-                                <button class="planning-danger-btn invite-btn invite-btn-danger deny-invite-btn" data-id="${item._id}">Cancel</button>
+                                <button class="planning-danger-btn invite-btn invite-btn-danger deny-invite-btn" data-id="${safeToken(item._id)}">Cancel</button>
                             </div>
                         `;
                     }

@@ -17,6 +17,7 @@ import reviewsRoute from "./routes/reviews.js";
 import settingsRoute from "./routes/settings.js";
 import socialRoute from "./routes/social.js";
 import errorHandler from "./middleware/errorHandler.js";
+import { enforceHttps, sanitizeRequest, validateProductionEnv } from "./middleware/security.js";
 import User from "./models/User.js";
 import Habit from "./models/Habit.js";
 import { sendEmail } from "./utils/emailHelper.js";
@@ -33,6 +34,27 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const CRON_TIMEZONE = process.env.CRON_TIMEZONE || "UTC";
 const DASHBOARD_URL = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+const isProduction = process.env.NODE_ENV === "production";
+const allowedOrigins = (process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+const cspDirectives = {
+  defaultSrc: ["'self'"],
+  baseUri: ["'self'"],
+  scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
+  styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+  fontSrc: ["'self'", "https://fonts.gstatic.com"],
+  imgSrc: ["'self'", "data:"],
+  connectSrc: ["'self'"],
+  objectSrc: ["'none'"],
+  frameAncestors: ["'none'"],
+  formAction: ["'self'"]
+};
+
+if (isProduction) {
+  cspDirectives.upgradeInsecureRequests = [];
+}
 const WEEKDAY_INDEX = {
   Sun: 0,
   Mon: 1,
@@ -43,29 +65,35 @@ const WEEKDAY_INDEX = {
   Sat: 6
 };
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "*", 
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}));
-app.use(express.json());
-app.use(morgan("combined"));
-
 // If behind a proxy (Heroku, Render, etc.) enable trust proxy so rate-limiter and helmet work as expected
 app.set("trust proxy", 1);
+app.disable("x-powered-by");
+app.use(enforceHttps);
 app.use(helmet({
   contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
-      objectSrc: ["'none'"]
-    }
-  }
+    directives: cspDirectives
+  },
+  crossOriginEmbedderPolicy: false,
+  frameguard: { action: "deny" },
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  noSniff: true
 }));
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    const normalizedOrigin = origin.replace(/\/$/, "");
+    if (!isProduction || allowedOrigins.length === 0 || allowedOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Origin not allowed by CORS"));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+app.use(express.json({ limit: "100kb" }));
+app.use(sanitizeRequest);
+app.use(morgan(isProduction ? "combined" : "dev"));
 
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
@@ -410,25 +438,25 @@ const initializeEmailCronJobs = () => {
 
 // Fallback Route (Serving Frontend on any unmatched routes)
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ error: "API route not found" });
+  }
+
+  res.status(404).sendFile(path.join(__dirname, "public", "error.html"));
 });
 
 const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
   try {
+    validateProductionEnv();
     await mongoose.connect(process.env.MONGO_URI, {});
     console.log("MongoDB connected");
 
     app.listen(PORT, () => {
       initializeEmailCronJobs();
       console.log(`Server running on port ${PORT}`);
-      console.log("Environment Keys Check:", {
-        "AI Key": process.env.AI_API_KEY ? "Found" : "MISSING",
-        "MongoDB URI": process.env.MONGO_URI ? "Found" : "MISSING",
-        "Email User": process.env.EMAIL_USER ? "Found" : "MISSING",
-        "Email Pass": process.env.EMAIL_PASS ? "Found" : "MISSING"
-      });
+      console.log("Production configuration validated.");
     });
   } catch (error) {
     console.error("MongoDB connection error:", error.message);
